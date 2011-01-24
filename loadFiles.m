@@ -15,4 +15,4 @@ for i= 1:length(path)
     end
     clear file
 end
-
+%cellfun(@(x) isfield(x,'eta_x'),file)
