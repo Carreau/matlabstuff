@@ -5,21 +5,23 @@
 % use a patern matching % calibration_simons10XX_AOM=0_bead=N_results.mat ('*results.mat')
 % and it will look for the psd corresponding file and merge the 2 in a '..merged_v01.mat' file
 
-function mergeResultsFiles(patern)
-	d = dir(patern);
+function mergeResultsFiles(filename)
 	l= length('results.mat');
-	names_orig		= arrayfun(@(x) x.name			,d			,'UniformOutput',false);
-	base_names		= cellfun( @(x) (x(1:end-l))	,names_orig	,'UniformOutput',false);
-	names_extended	= cellfun( @(x) [x 'psd.mat']	,base_names	,'UniformOutput',false);
-	names_newoutput	= cellfun( @(x) [x 'merged_v01.mat'],base_names	,'UniformOutput',false);
-	cellfun(@(x,y,z) actualmerge(x,y,z),names_orig,names_extended,names_newoutput);
+	base_names		= filename(1:end-l);
+	names_extended	= [base_names 'psd.mat'];
+	names_newoutput	= [base_names 'merged_v01.mat'];
+    actualmerge(filename,names_extended,names_newoutput);
+%	cellfun(@(x,y,z) actualmerge(x,y,z),filename,names_extended,names_newoutput);
 end
 
-
 function actualmerge(resultfilename,extendedfilname,outputfilename)
+    disp(['merging into ' outputfilename ]);
 	x = loadfunction(resultfilename);
 	y = loadfunction(extendedfilname);
 	c = catstruct(x,y,'sorted');
+    c.filename=outputfilename
+    c.makedAsDefective = 0;
+    c.defectiveReason = '';
 	save(outputfilename,'-struct','c');
 end
 

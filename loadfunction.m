@@ -2,7 +2,7 @@
 % but which cn be used in structfun or cellfun.
 
 function [structhandle] = loadfunction(path)
-	path
+	path;
 	structhandle = load(path);
 end
 	
