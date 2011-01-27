@@ -19,9 +19,10 @@ function actualmerge(resultfilename,extendedfilname,outputfilename)
 	x = loadfunction(resultfilename);
 	y = loadfunction(extendedfilname);
 	c = catstruct(x,y,'sorted');
-    c.filename=outputfilename
+    c.filename=outputfilename;
     c.makedAsDefective = 0;
     c.defectiveReason = '';
+    c.markAsDefectiveTimeStamp = 0;
 	save(outputfilename,'-struct','c');
 end
 
