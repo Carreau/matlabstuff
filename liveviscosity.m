@@ -10,6 +10,7 @@ function [files] =  liveViscosity()
 	fplot(@(x) x,[min(etax) max(etax)],'--');
 	xlabel('\eta_x');
 	ylabel('\eta_y');
+	hold off;
 	figure(2);
 	plot(time,etax,'x');
 	hold on;
