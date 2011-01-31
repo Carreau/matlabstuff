@@ -10,4 +10,5 @@ function ttt()
 	plot(rate,etay,'ro');
 	xlabel('rate');
 	ylabel('\eta');
+	hold off;
 end
