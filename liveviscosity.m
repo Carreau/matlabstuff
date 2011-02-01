@@ -1,6 +1,7 @@
 function [files] =  liveViscosity()
 	recursiveMergeResults();
 	files =loadFilesAsCellArray('.','_v01.mat');
+	files = structFilterdByFieldValue(files,'eta_x',@(x) x < 0.10);
 	etax = cellfun(@(x) x.eta_x, files);
 	etay = cellfun(@(x) x.eta_y, files);
 	time = cellfun(@(x) datenum(x.timestamp),files);
