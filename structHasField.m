@@ -1,3 +1,3 @@
-function [matchingArray] = structHasField(cellArray,fieldname)
-matchingArray = cellfun(@(x) isfield(x,fieldname),cellArray);
+function [matchingArray] = structHasField(arrayArray,fieldname)
+matchingArray = arrayfun(@(x) isfield(x,fieldname),arrayArray);
 

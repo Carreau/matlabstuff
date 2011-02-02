@@ -12,7 +12,7 @@ end
 
 function  [m s] = getMAndSForRate(files,keyvalue,avgfield,keyfield)
   ff = structFilterdByFieldValue(files,keyfield,@(x) x == keyvalue);
-  c=cellfun(@(x) getField(x,avgfield),ff);
+  c=arrayfun(@(x) getField(x,avgfield),ff);
   s=std(c);
   m=mean(c);
 end
