@@ -1,6 +1,6 @@
 function ttt()
 	files = liveviscosity();
-	power = cellfun(@(x) x.Traps(5),files);
+	power = arrayfun(@(x) x.Traps(5),files);
 	rate = m_extractfield(files,'rate');
 	avg = (1e6./rate-4) ./ 2
 
