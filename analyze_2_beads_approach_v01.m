@@ -39,10 +39,6 @@ end
 if nargout
     [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
 else
-    disp('varaargin');
-    if length(varargin)>0
-        disp(varargin);
-    end
     gui_mainfcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
@@ -662,7 +658,7 @@ load_dataset(hObject, eventdata, handles)
 
 %-----------------------------------------------------------
 function file_list=get_subfolders(parent_dir)
-disp(parent_dir);
+%disp(parent_dir);
 allSubFolders=genpath(parent_dir);
     
     % Scan through them separating them.
@@ -670,7 +666,7 @@ remain = allSubFolders;
 listOfFolderNames = {};
 n=1;
 while true % Demo code adapted from the help file.
-[singleSubFolder, remain] = strtok(remain, ';');
+[singleSubFolder, remain] = strtok(remain, pathsep);
 if isempty(singleSubFolder), break; end
 disp(sprintf('%s', singleSubFolder));
 listOfFolderNames = [listOfFolderNames singleSubFolder];
