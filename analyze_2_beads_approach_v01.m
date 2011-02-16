@@ -119,26 +119,46 @@ f_align=10e-12
 rdata=handles.rdata;
 %now we extract the data from the TDMS files.
 parameters=rdata.Data.Parameters.Root;
+
+
+%% filter data
+% due to control bit we need to remove 1 point from time to time
+% let's find the middle value and find on which side ther is the
+% most points
+clear rd milieu want s;
+rd = rdata.Data.MeasuredData(4).Data;
+milieu  = (min(rd)+max(rd))/2;
+want = rd < milieu;
+s= sum(want);
+if(s < length(rd)/10)
+   want=not(want);
+end
+clear s milieu;
+disp(sprintf('in the filtered data, %d datapoints have been removed', sum(not(want)) ));
+
+%% try to change the rdata structure to remove unwanted columns
+rd2=rdata
+rd=rdata;
+arrayfun(@(x) disp(length(x.Data)),rd2.Data.MeasuredData)
+s = sum(not(want))
+for i = 1:33
+    rdata.Data.MeasuredData(i).Data = rdata.Data.MeasuredData(i).Data(want);
+    rdata.Data.MeasuredData(i).Total_Samples = rdata.Data.MeasuredData(i).Total_Samples-sum(not(want));
+end
+disp('après filtrage');
+arrayfun(@(x) length(x.Data),rd2.Data.MeasuredData)
+%rdata.Data.MeasuredData
+
+
+%%
+
+disp('fin filtragee');
 for i=1:15
     data1(i,:)=rdata.Data.MeasuredData(3+i).Data;
     data2(i,:)=rdata.Data.MeasuredData(18+i).Data;
 end
 %%%
-%% filter data
-% due to control bit we need to remove 1 point from time to time
-% let's find the middle value and find on which side ther is the
-% most points
-rd = rdata.Data.MeasuredData(4).Data;
-milieu  = (min(rd)+max(rd))/2
-want = rd < milieu;
-s= sum(want)
-if(s < length(rd)/10)
-   want=not(want);
-end
-s= sum(want)
-disp(strcat('in the filtered data, ',s,' datapoints have been removed'));
 
-%%
 
 %now we correct for offsets. This assumes that both beads are traps with
 %no force at the beginning!!!!
