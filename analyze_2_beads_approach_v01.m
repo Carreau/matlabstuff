@@ -113,7 +113,7 @@ function handles=preprocess_data(handles)
 %r is the bead radius, unfortunately, I do not save that one from the
 %preogram
 r=4.5e-6/2
-%this is hte forca over which I try to align all the datasets
+%this is the force over which I try to align all the datasets
 f_align=10e-12
 
 rdata=handles.rdata;
@@ -123,10 +123,26 @@ for i=1:15
     data1(i,:)=rdata.Data.MeasuredData(3+i).Data;
     data2(i,:)=rdata.Data.MeasuredData(18+i).Data;
 end
+%%%
+%% filter data
+% due to control bit we need to remove 1 point from time to time
+% let's find the middle value and find on which side ther is the
+% most points
+rd = rdata.Data.MeasuredData(4).Data;
+milieu  = (min(rd)+max(rd))/2
+want = rd < milieu;
+s= sum(want)
+if(s < length(rd)/10)
+   want=not(want);
+end
+s= sum(want)
+disp(strcat('in the filtered data, ',s,' datapoints have been removed'));
+
+%%
 
 %now we correct for offsets. This assumes that both beads are traps with
 %no force at the beginning!!!!
-% This also fixes issues where the first trapwas moved. This ensures that
+% This also fixes issues where the first trap help was moved. This ensures that
 % from now on always the second trap is moved!
 a=find(diff(data2(1,:)+data2(2,:))~=0);
 if numel(a)==0
