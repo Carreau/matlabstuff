@@ -1,11 +1,11 @@
 function [files] =  liveViscosity()
 	recursiveMergeResults();
 	files =loadFilesAsStructArray('.','_v01.mat');
-	etax = [files.eta_x]
-	etay = [files.eta_y]
+	etax = [files.eta_x];
+	etay = [files.eta_y];
 	time = arrayfun(@(x) datenum(x.timestamp),files);
 	figure(1);
-	plot(files.eta_x,files.eta_y,'+');
+	plot(etax,etay,'x');
 	hold on;
 	fplot(@(x) x,[min(etax) max(etax)],'--');
 	xlabel('\eta_x');
