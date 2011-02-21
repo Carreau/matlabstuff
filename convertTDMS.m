@@ -99,11 +99,11 @@ function [ConvertedData,ConvertVer]=convertTDMS(SaveConvertedFile,filename)
 %Christian Buxel - V1.7 2010-09-17
 %RWTH Aachen
 %-Tested in Matlab2007b.
-%-Added support for german umlauts (Ä,ä,Ö,ö,Ü,ü,ß) in 'propsName'
+%-Added support for german umlauts (ï¿½,ï¿½,ï¿½,ï¿½,ï¿½,ï¿½,ï¿½) in 'propsName'
 %---------------------------------------------
 
 %---------------------------------------------
-%André Rüegg - V1.7 2010-09-29
+%Andrï¿½ Rï¿½egg - V1.7 2010-09-29
 %Supercomputing Systems AG
 %-Tested in MATLAB 2006a & 2010b
 %-Make sure that data can be loaded correctly independently of character
@@ -819,16 +819,16 @@ function  [FixedText,TruncFieldName,ValidFieldName]=fixcharformatlab(textin)
 	textin=strrep(textin,')','');
 	textin=strrep(textin,':','');
 	textin=strrep(textin,'^','_');
-	textin=strrep(textin,'Ä','Ae');
-	textin=strrep(textin,'ä','ae');
-	textin=strrep(textin,'Ö','Oe');
-	textin=strrep(textin,'ö','oe');
-	textin=strrep(textin,'Ü','Ue');
-	textin=strrep(textin,'ü','ue');
-	textin=strrep(textin,'ß','ss');
-	textin=strrep(textin,'é','e');
-	textin=strrep(textin,'°','deg');
-    textin=strrep(textin,'µ','micro');
+	textin=strrep(textin,'ï¿½','Ae');
+	textin=strrep(textin,'ï¿½','ae');
+	textin=strrep(textin,'ï¿½','Oe');
+	textin=strrep(textin,'ï¿½','oe');
+	textin=strrep(textin,'ï¿½','Ue');
+	textin=strrep(textin,'ï¿½','ue');
+	textin=strrep(textin,'ï¿½','ss');
+	textin=strrep(textin,'ï¿½','e');
+	textin=strrep(textin,'ï¿½','deg');
+    textin=strrep(textin,'Âµ','micro');
     textin=strrep(textin,'<','');
     textin=strrep(textin,'>','');
 	
