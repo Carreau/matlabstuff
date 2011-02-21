@@ -146,7 +146,7 @@ for i = 1:33
     rdata.Data.MeasuredData(i).Total_Samples = rdata.Data.MeasuredData(i).Total_Samples-sum(not(want));
 end
 disp('après filtrage');
-arrayfun(@(x) length(x.Data),rd2.Data.MeasuredData)
+arrayfun(@(x) length(x.Data),rd2.Data.MeasuredData);
 %rdata.Data.MeasuredData
 
 
