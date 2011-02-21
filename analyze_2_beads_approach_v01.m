@@ -1,246 +1,301 @@
 function varargout = analyze_2_beads_approach_v01(varargin)
-% ANALYZE_2_BEADS_APPROACH_V0 M-file for analyze_2_beads_approach_v0.fig
-%      ANALYZE_2_BEADS_APPROACH_V0, by itself, creates a new ANALYZE_2_BEADS_APPROACH_V0 or raises the existing
-%      singleton*.
-%
-%      H = ANALYZE_2_BEADS_APPROACH_V0 returns the handle to a new ANALYZE_2_BEADS_APPROACH_V0 or the handle to
-%      the existing singleton*.
-%
-%      ANALYZE_2_BEADS_APPROACH_V0('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in ANALYZE_2_BEADS_APPROACH_V0.M with the given input arguments.
-%
-%      ANALYZE_2_BEADS_APPROACH_V0('Property','Value',...) creates a new ANALYZE_2_BEADS_APPROACH_V0 or raises the
-%      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before analyze_2_beads_approach_v0_OpeningFcn gets called.  An
-%      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to analyze_2_beads_approach_v0_OpeningFcn via varargin.
-%
-%      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
-%      instance to run (singleton)".
-%
-% See also: GUIDE, GUIDATA, GUIHANDLES
-
-% Edit the above text to modify the response to help analyze_2_beads_approach_v0
-
-% Last Modified by GUIDE v2.5 01-Nov-2010 01:33:23
-
-% Begin initialization code - DO NOT EDIT
-gui_Singleton = 1;
-gui_State = struct('gui_Name',       mfilename, ...
-                   'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @analyze_2_beads_approach_v0_OpeningFcn, ...
-                   'gui_OutputFcn',  @analyze_2_beads_approach_v0_OutputFcn, ...
-                   'gui_LayoutFcn',  [] , ...
-                   'gui_Callback',   []);
-if nargin && ischar(varargin{1})
-    gui_State.gui_Callback = str2func(varargin{1});
-end
-
-if nargout
-    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
-else
-    gui_mainfcn(gui_State, varargin{:});
-end
-% End initialization code - DO NOT EDIT
-
-
-% --- Executes just before analyze_2_beads_approach_v0 is made visible.
-function analyze_2_beads_approach_v0_OpeningFcn(hObject, eventdata, handles, varargin)
-% This function has no output args, see OutputFcn.
-% hObject    handle to figure
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to analyze_2_beads_approach_v0 (see VARARGIN)
-
-% Choose default command line output for analyze_2_beads_approach_v0
-handles.output = hObject;
-
-%DEfile a starting directory fpr the open file
-handles.ddir='E:\Science\data\elasticity';
-
-%make sure we have the tools
-set(hObject,'toolbar','figure');
-
-% Update handles structure
-guidata(hObject, handles);
-
-% UIWAIT makes analyze_2_beads_approach_v0 wait for user response (see UIRESUME)
-% uiwait(handles.figure1);
-
-
-% --- Outputs from this function are returned to the command line.
-function varargout = analyze_2_beads_approach_v0_OutputFcn(hObject, eventdata, handles) 
-% varargout  cell array for returning output args (see VARARGOUT);
-% hObject    handle to figure
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Get default command line output from handles structure
-varargout{1} = handles.output;
-
-
-% --------------------------------------------------------------------
-function Untitled_1_Callback(hObject, eventdata, handles)
-% hObject    handle to Untitled_1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --------------------------------------------------------------------
-function load_Callback(hObject, eventdata, handles)
-% hObject    handle to load (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-ddir=handles.ddir;
-[dfile,ddir]=uigetfile('*.tdms','Please specify the TDMS file to analyze',ddir);
-handles.actual_set=1;
-file_list.name=[ddir,filesep,dfile];
-handles.file_list=file_list
-handles.ddir=ddir;
-handles.dfile=dfile;
-%now make sure that the save data array is empty
-handles.save_data=[];
-load_dataset(hObject, eventdata, handles)
-
-
-
-% --------------------------------------------------------------------
-function handles=preprocess_data(handles)
-% handles    structure with handles and user data (see GUIDATA)
-
-%here we will preprocess the data. Get absolut positions, and get forces.
-
-%r is the bead radius, unfortunately, I do not save that one from the
-%preogram
-r=4.5e-6/2
-%this is the force over which I try to align all the datasets
-f_align=10e-12
-
-rdata=handles.rdata;
-%now we extract the data from the TDMS files.
-parameters=rdata.Data.Parameters.Root;
-
-
-%% filter data
-% due to control bit we need to remove 1 point from time to time
-% let's find the middle value and find on which side ther is the
-% most points
-clear rd milieu want s;
-rd = rdata.Data.MeasuredData(4).Data;
-milieu  = (min(rd)+max(rd))/2;
-want = rd < milieu;
-s= sum(want);
-if(s < length(rd)/10)
-   want=not(want);
-end
-clear s milieu;
-disp(sprintf('in the filtered data, %d datapoints have been removed', sum(not(want)) ));
-
-%% try to change the rdata structure to remove unwanted columns
-rd2=rdata
-rd=rdata;
-arrayfun(@(x) disp(length(x.Data)),rd2.Data.MeasuredData)
-s = sum(not(want))
-for i = 1:33
-    rdata.Data.MeasuredData(i).Data = rdata.Data.MeasuredData(i).Data(want);
-    rdata.Data.MeasuredData(i).Total_Samples = rdata.Data.MeasuredData(i).Total_Samples-sum(not(want));
-end
-disp('après filtrage');
-arrayfun(@(x) length(x.Data),rd2.Data.MeasuredData)
-%rdata.Data.MeasuredData
-
-
-%%
-
-disp('fin filtragee');
-for i=1:15
-    data1(i,:)=rdata.Data.MeasuredData(3+i).Data;
-    data2(i,:)=rdata.Data.MeasuredData(18+i).Data;
-end
-%%%
-
-
-%now we correct for offsets. This assumes that both beads are traps with
-%no force at the beginning!!!!
-% This also fixes issues where the first trap help was moved. This ensures that
-% from now on always the second trap is moved!
-a=find(diff(data2(1,:)+data2(2,:))~=0);
-if numel(a)==0
-    data_=data2; data2=data1;data1=data_;
-    a=find(diff(data2(1,:)+data2(2,:))~=0);
-end
-data1(4,:)=data1(4,:)-mean(data1(4,1:a(1)));
-data1(6,:)=data1(6,:)-mean(data1(6,1:a(1)));
-data2(4,:)=data2(4,:)-mean(data2(4,1:a(1)));
-data2(6,:)=data2(6,:)-mean(data2(6,1:a(1)));
-
-%additionally, this is the right moment to filter the data, to get rid of
-%the annoying noise from the bad digital cable
-%ok maybe later, first I just do a simple bin filter:
-
-
-cal(1)=parameters.AOD_center_X.value;
-cal(2)=parameters.AOD_center_Y.value;
-cal(3)=parameters.AOD_factor_X.value;
-cal(4)=parameters.AOD_factor_Y.value;
-cal(5)=parameters.AOD_to_microm_x.value;
-cal(6)=parameters.AOD_to_microm_y.value;
-xy_slopes(1,1)=parameters.x_slope_bead1.value;
-xy_slopes(1,2)=parameters.y_slope_bead1.value;
-xy_slopes(2,1)=parameters.x_slope_bead2.value;
-xy_slopes(2,2)=parameters.y_slope_bead2.value;
-
-kappa(1,1)=parameters.x_kappa_bead1.value;
-kappa(1,2)=parameters.y_kappa_bead1.value;
-kappa(2,1)=parameters.x_kappa_bead2.value;
-kappa(2,2)=parameters.y_kappa_bead2.value;
-
-%this corrects for the case that the position was saved in digital AOD
-%units
-if mean(data1(1,:))>1
-    data1(1,:)=dig2nor(data1(1,:));
-    data1(2,:)=dig2nor(data1(2,:));
-    data2(1,:)=dig2nor(data2(1,:));
-    data2(2,:)=dig2nor(data2(2,:));
-end
+    % ANALYZE_2_BEADS_APPROACH_V0 M-file for analyze_2_beads_approach_v0.fig
+    %      ANALYZE_2_BEADS_APPROACH_V0, by itself, creates a new ANALYZE_2_BEADS_APPROACH_V0 or raises the existing
+    %      singleton*.
+    %
+    %      H = ANALYZE_2_BEADS_APPROACH_V0 returns the handle to a new ANALYZE_2_BEADS_APPROACH_V0 or the handle to
+    %      the existing singleton*.
+    %
+    %      ANALYZE_2_BEADS_APPROACH_V0('CALLBACK',hObject,eventData,handles,...) calls the local
+    %      function named CALLBACK in ANALYZE_2_BEADS_APPROACH_V0.M with the given input arguments.
+    %
+    %      ANALYZE_2_BEADS_APPROACH_V0('Property','Value',...) creates a new ANALYZE_2_BEADS_APPROACH_V0 or raises the
+    %      existing singleton*.  Starting from the left, property value pairs are
+    %      applied to the GUI before analyze_2_beads_approach_v0_OpeningFcn gets called.  An
+    %      unrecognized property name or invalid value makes property application
+    %      stop.  All inputs are passed to analyze_2_beads_approach_v0_OpeningFcn via varargin.
+    %
+    %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
+    %      instance to run (singleton)".
+    %
+    % See also: GUIDE, GUIDATA, GUIHANDLES
     
-%recalc the absolute position and put in 12, and 13
-data1(12,:)=data1(1,:)/cal(5)-1/xy_slopes(1,1)*data1(4,:)./data1(8,:);
-data1(13,:)=data1(2,:)/cal(6)-1/xy_slopes(1,2)*data1(6,:)./data1(8,:);
-
-data2(12,:)=data2(1,:)/cal(5)-1/xy_slopes(2,1)*data2(4,:)./data2(8,:);
-data2(13,:)=data2(2,:)/cal(6)-1/xy_slopes(2,2)*data2(6,:)./data2(8,:);
-
-%now we recalc the forces as we want the offset substraction to also act on
-%the forces
-data1(14,:)=kappa(1,1)/xy_slopes(1,1)*data1(4,:)./data1(8,:)*1E-6;
-data1(15,:)=kappa(1,2)/xy_slopes(1,2)*data1(6,:)./data1(8,:)*1E-6;
-data2(14,:)=kappa(2,1)/xy_slopes(2,1)*data2(4,:)./data2(8,:)*1E-6;
-data2(15,:)=kappa(2,2)/xy_slopes(2,2)*data2(6,:)./data2(8,:)*1E-6;
-
-data(1,:,:)=data1;
-data(2,:,:)=data2;
-
-d=sqrt((data1(12,:)-data2(12,:)).^2+(data1(13,:)-data2(13,:)).^2);
-%now we change the coordinate system to see the forces parallel and
-%perpendicular of the two beads. These forces will be saved in the forces
-%array
-alp=cart2pol(data1(1,1)-data2(1,1),data1(2,1)-data2(2,1))+pi;
-[ft,fr]=cart2pol(data1(14,:),data1(15,:));
-[f(1,1,:),f(1,2,:)]=pol2cart(ft+alp,fr);
-[ft,fr]=cart2pol(data2(14,:),data2(15,:));
-[f(2,1,:),f(2,2,:)]=pol2cart(ft+alp,fr);
-
-
-handles.d=d;
-handles.f=f;
-handles.cal=cal;
-handles.xy_slopes=xy_slopes;
-handles.data=data;
-handles.parameters=parameters;
-
-%now we will already filter the data to have it less heavy, and also apply
-%the calculation of the values of interest
+    disp('warning this is still a testing version, it saves data with reomved datapoints');
+    %           raw order of data in tdms file :
+    % force_and_distancedistance
+    % force_and_distanceforce_moving_bead
+    % force_and_distanceforce_fixed_bead
+    % data1x_pos_AOD_units (1)
+    % data1y_pos_AOD_units
+    % data1AOM
+    % data1x_qpd_mean
+    % data1x_qpd_std (5)
+    % data1y_qpd_mean
+    % data1y_qpd_std
+    % data1sum_qpd_mean
+    % data1sum_qpd_std
+    % data1PD_mean (10)
+    % data1PD_std
+    % data1x_abs_pos_in_mu
+    % data1y_abs_pos_in_mu
+    % data1x_force_in_N
+    % data1y_force_in_N (15)
+    % data2x_pos_AOD_units
+    % data2y_pos_AOD_units
+    % data2AOM
+    % data2x_qpd_mean
+    % data2x_qpd_std (20)
+    % data2y_qpd_mean
+    % data2y_qpd_std
+    % data2sum_qpd_mean
+    % data2sum_qpd_std
+    % data2PD_mean
+    % data2PD_std
+    % data2x_abs_pos_in_mu
+    % data2y_abs_pos_in_mu
+    % data2x_force_in_N
+    % data2y_force_in_N
+    
+    % note about the data structure of dataX 
+    %   row number  -   data stored
+    %   1           -   trap center(x?)
+    %   2           -   trap center(y?)
+    %   3           -   
+    %   4           -   bead position in trap(x?)
+    %   5           -   
+    %   6           -   bead position in trap(y?)
+    %   7           -   
+    %   8           -   
+    %   9           -   
+    %   10          -   
+    %   11          -   
+    %   12          -   absolute position(x?)
+    %   13          -   absolute position(y?)
+    %   14          -   force on the bead (x?)
+    %   15          -   force on the bead (y?)
+    %   16          -   
+    
+    % Edit the above text to modify the response to help analyze_2_beads_approach_v0
+    
+    % Last Modified by GUIDE v2.5 01-Nov-2010 01:33:23
+    
+    % Begin initialization code - DO NOT EDIT
+    gui_Singleton = 1;
+    gui_State = struct('gui_Name',       mfilename, ...
+                       'gui_Singleton',  gui_Singleton, ...
+                       'gui_OpeningFcn', @analyze_2_beads_approach_v0_OpeningFcn, ...
+                       'gui_OutputFcn',  @analyze_2_beads_approach_v0_OutputFcn, ...
+                       'gui_LayoutFcn',  [] , ...
+                       'gui_Callback',   []);
+    if nargin && ischar(varargin{1})
+        gui_State.gui_Callback = str2func(varargin{1});
+    end
+    
+    if nargout
+        [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+    else
+        gui_mainfcn(gui_State, varargin{:});
+    end
+    % End initialization code - DO NOT EDIT
+    
+    
+    % --- Executes just before analyze_2_beads_approach_v0 is made visible.
+function analyze_2_beads_approach_v0_OpeningFcn(hObject, eventdata, handles, varargin)
+    % This function has no output args, see OutputFcn.
+    % hObject    handle to figure
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    structure with handles and user data (see GUIDATA)
+    % varargin   command line arguments to analyze_2_beads_approach_v0 (see VARARGIN)
+    
+    % Choose default command line output for analyze_2_beads_approach_v0
+    handles.output = hObject;
+    
+    %DEfile a starting directory fpr the open file
+    handles.ddir='E:\Science\data\elasticity';
+    
+    %make sure we have the tools
+    set(hObject,'toolbar','figure');
+    
+    % Update handles structure
+    guidata(hObject, handles);
+    
+    % UIWAIT makes analyze_2_beads_approach_v0 wait for user response (see UIRESUME)
+    % uiwait(handles.figure1);
+    
+    
+    % --- Outputs from this function are returned to the command line.
+function varargout = analyze_2_beads_approach_v0_OutputFcn(hObject, eventdata, handles) 
+    % varargout  cell array for returning output args (see VARARGOUT);
+    % hObject    handle to figure
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    structure with handles and user data (see GUIDATA)
+    
+    % Get default command line output from handles structure
+    varargout{1} = handles.output;
+    
+    
+    % --------------------------------------------------------------------
+function Untitled_1_Callback(hObject, eventdata, handles)
+    % hObject    handle to Untitled_1 (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    structure with handles and user data (see GUIDATA)
+    
+    
+    % --------------------------------------------------------------------
+function load_Callback(hObject, eventdata, handles)
+    % hObject    handle to load (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    structure with handles and user data (see GUIDATA)
+    ddir=handles.ddir;
+    [dfile,ddir]=uigetfile('*.tdms','Please specify the TDMS file to analyze',ddir);
+    handles.actual_set=1;
+    file_list.name=[ddir,filesep,dfile];
+    handles.file_list=file_list
+    handles.ddir=ddir;
+    handles.dfile=dfile;
+    %now make sure that the save data array is empty
+    handles.save_data=[];
+    load_dataset(hObject, eventdata, handles)
+    
+    
+    
+    % --------------------------------------------------------------------
+function handles=preprocess_data(handles)
+    % handles    structure with handles and user data (see GUIDATA)
+    
+    %here we will preprocess the data. Get absolut positions, and get forces.
+    
+    %r is the bead radius, unfortunately, I do not save that one from the
+    %preogram
+    r=4.5e-6/2
+    %this is the force over which I try to align all the datasets
+    f_align=10e-12
+    
+    rdata=handles.rdata;
+    %now we extract the data from the TDMS files.
+    parameters=rdata.Data.Parameters.Root;
+    
+    
+    %% filter data
+    % due to control bit we need to remove 1 point from time to time
+    % let's find the middle value and find on which side ther is the
+    % most points
+    clear rd milieu want s;
+    rd = rdata.Data.MeasuredData(4).Data;
+    milieu  = (min(rd)+max(rd))/2;
+    want = rd < milieu;
+    s= sum(want);
+    if(s < length(rd)/10)
+       want=not(want);
+    end
+    clear s milieu;
+    disp(sprintf('in the filtered data, %d datapoints have been removed', sum(not(want)) ));
+    
+    %% try to change the rdata structure to remove unwanted columns
+    %rd2=rdata
+    rd=rdata;
+    %arrayfun(@(x) disp(length(x.Data)),rd2.Data.MeasuredData)
+    s = sum(not(want))
+    for i = 1:33
+        rdata.Data.MeasuredData(i).Data = rdata.Data.MeasuredData(i).Data(want);
+        rdata.Data.MeasuredData(i).Total_Samples = rdata.Data.MeasuredData(i).Total_Samples-sum(not(want));
+    end
+    %disp('après filtrage');
+    %arrayfun(@(x) length(x.Data),rd2.Data.MeasuredData)
+    %rdata.Data.MeasuredData
+    
+    
+    %% here we actually do the filtering, putting filterd data into data1 and data2
+    %  we also make sure raw data isn't accessible anymore, by clearing it
+    
+    disp('fin filtragee');
+    for i=1:15
+        data1(i,:)=rdata.Data.MeasuredData(3+i).Data;
+        data2(i,:)=rdata.Data.MeasuredData(18+i).Data;
+    end
+    clear rdata rd s want
+    
+    %% now we correct for offsets. This assumes that both beads are traps with
+    % no force at the beginning!!!!
+    % This also fixes issues where the first trap help was moved. This ensures that
+    % from now on always the second trap is moved!
+    a=find(diff(data2(1,:)+data2(2,:))~=0);
+    if numel(a)==0
+        data_=data2; data2=data1;data1=data_;
+        a=find(diff(data2(1,:)+data2(2,:))~=0);
+    end
+    data1(4,:)=data1(4,:)-mean(data1(4,1:a(1)));
+    data1(6,:)=data1(6,:)-mean(data1(6,1:a(1)));
+    data2(4,:)=data2(4,:)-mean(data2(4,1:a(1)));
+    data2(6,:)=data2(6,:)-mean(data2(6,1:a(1)));
+    
+    %%additionally, this is the right moment to filter the data, to get rid of
+    % the annoying noise from the bad digital cable
+    % ok maybe later, first I just do a simple bin filter:
+    % (matt), this is done in the upper part of this document 
+    
+    cal(1)=parameters.AOD_center_X.value;
+    cal(2)=parameters.AOD_center_Y.value;
+    cal(3)=parameters.AOD_factor_X.value;
+    cal(4)=parameters.AOD_factor_Y.value;
+    cal(5)=parameters.AOD_to_microm_x.value;
+    cal(6)=parameters.AOD_to_microm_y.value;
+    xy_slopes(1,1)=parameters.x_slope_bead1.value;
+    xy_slopes(1,2)=parameters.y_slope_bead1.value;
+    xy_slopes(2,1)=parameters.x_slope_bead2.value;
+    xy_slopes(2,2)=parameters.y_slope_bead2.value;
+    
+    kappa(1,1)=parameters.x_kappa_bead1.value;
+    kappa(1,2)=parameters.y_kappa_bead1.value;
+    kappa(2,1)=parameters.x_kappa_bead2.value;
+    kappa(2,2)=parameters.y_kappa_bead2.value;
+    
+    %this corrects for the case that the position was saved in digital AOD
+    %units
+    if mean(data1(1,:))>1
+        data1(1,:)=dig2nor(data1(1,:));
+        data1(2,:)=dig2nor(data1(2,:));
+        data2(1,:)=dig2nor(data2(1,:));
+        data2(2,:)=dig2nor(data2(2,:));
+    end
+        
+    %recalc the absolute position and put in 12, and 13
+    data1(12,:)=data1(1,:)/cal(5)-1/xy_slopes(1,1)*data1(4,:)./data1(8,:);
+    data1(13,:)=data1(2,:)/cal(6)-1/xy_slopes(1,2)*data1(6,:)./data1(8,:);
+    
+    data2(12,:)=data2(1,:)/cal(5)-1/xy_slopes(2,1)*data2(4,:)./data2(8,:);
+    data2(13,:)=data2(2,:)/cal(6)-1/xy_slopes(2,2)*data2(6,:)./data2(8,:);
+    
+    %now we recalc the forces as we want the offset substraction to also act on
+    %the forces
+    data1(14,:)=kappa(1,1)/xy_slopes(1,1)*data1(4,:)./data1(8,:)*1E-6;
+    data1(15,:)=kappa(1,2)/xy_slopes(1,2)*data1(6,:)./data1(8,:)*1E-6;
+    data2(14,:)=kappa(2,1)/xy_slopes(2,1)*data2(4,:)./data2(8,:)*1E-6;
+    data2(15,:)=kappa(2,2)/xy_slopes(2,2)*data2(6,:)./data2(8,:)*1E-6;
+    
+    data(1,:,:)=data1;
+    data(2,:,:)=data2;
+    
+    d=sqrt((data1(12,:)-data2(12,:)).^2+(data1(13,:)-data2(13,:)).^2);
+    %now we change the coordinate system to see the forces parallel and
+    %perpendicular of the two beads. These forces will be saved in the forces
+    %array
+    alp=cart2pol(data1(1,1)-data2(1,1),data1(2,1)-data2(2,1))+pi;
+    [ft,fr]=cart2pol(data1(14,:),data1(15,:));
+    [f(1,1,:),f(1,2,:)]=pol2cart(ft+alp,fr);
+    [ft,fr]=cart2pol(data2(14,:),data2(15,:));
+    [f(2,1,:),f(2,2,:)]=pol2cart(ft+alp,fr);
+    
+    
+    handles.d=d;
+    handles.f=f;
+    handles.cal=cal;
+    handles.xy_slopes=xy_slopes;
+    handles.data=data;
+    handles.parameters=parameters;
+    
+    %now we will already filter the data to have it less heavy, and also apply
+    %the calculation of the values of interest
     a_data.name=handles.file_list(handles.actual_set).name;
     a_data.f=handles.f; plot(squeeze(handles.f(1,1,:)))
     a_data.d=handles.d;
@@ -266,13 +321,19 @@ handles.parameters=parameters;
     out_data.f=f_out;
     out_data.trap_pos=t_out;  
     
-
-  %and now we calculate the numbers we would like to extract from the data
-      %first I calculate the dissipated energy
+	
+    %and now we calculate the numbers we would like to extract from the data
+    %first I calculate the dissipated energy
     out_data.diss_energy=1e-6*sum(diff(out_data.d)'.*squeeze(out_data.f(1,1,2:end)));
     set(handles.text_diss,'String',['E Diss=',num2str(out_data.diss_energy,2),' J'])
-    
-    %now get teh points where the approach stated and ended, and where the
+    %the command of the moving trap look like this:
+    %
+    %    __________
+    %   /          \
+    %  /            \
+    % /              \
+    %
+    %now get the points where the approach stated and ended, and where the
     %retraction started
     tr=out_data.trap_pos;
     tr_m=sqrt(squeeze(tr(2,1,:)).^2+squeeze(tr(2,2,:)).^2);
@@ -317,6 +378,7 @@ handles.parameters=parameters;
     %then fit an exponential of the form d(t)=alpha*exp(-t/tau)+d_e
     
     d_t=out_data.d(out_data.appr_stop:out_data.retr_start);
+%   1           -   
     t_t=[0:length(d_t)-1]*1/out_data.parameters.Effective_Sampling_Rate.value;
     
     start_point = [d_t(1)-d_t(end),d_t(end),t_t(end)];
