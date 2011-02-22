@@ -20,6 +20,7 @@ function varargout = analyze_2_beads_approach_v01(varargin)
     %
     % See also: GUIDE, GUIDATA, GUIHANDLES
     
+    %% on affiche si c'est un version de test
     disp('warning this is still a testing version, it saves data with reomved datapoints');
     %           raw order of data in tdms file :
     % force_and_distancedistance
@@ -99,7 +100,7 @@ function varargout = analyze_2_beads_approach_v01(varargin)
     % End initialization code - DO NOT EDIT
     
     
-    % --- Executes just before analyze_2_beads_approach_v0 is made visible.
+    %% --- Executes just before analyze_2_beads_approach_v0 is made visible.
 function analyze_2_beads_approach_v0_OpeningFcn(hObject, eventdata, handles, varargin)
     % This function has no output args, see OutputFcn.
     % hObject    handle to figure
@@ -123,7 +124,7 @@ function analyze_2_beads_approach_v0_OpeningFcn(hObject, eventdata, handles, var
     % uiwait(handles.figure1);
     
     
-    % --- Outputs from this function are returned to the command line.
+    %% --- Outputs from this function are returned to the command line.
 function varargout = analyze_2_beads_approach_v0_OutputFcn(hObject, eventdata, handles) 
     % varargout  cell array for returning output args (see VARARGOUT);
     % hObject    handle to figure
@@ -200,7 +201,7 @@ function handles=preprocess_data(handles)
         rdata.Data.MeasuredData(i).Data = rdata.Data.MeasuredData(i).Data(want);
         rdata.Data.MeasuredData(i).Total_Samples = rdata.Data.MeasuredData(i).Total_Samples-sum(not(want));
     end
-    %disp('après filtrage');
+    %disp('aprï¿½s filtrage');
     %arrayfun(@(x) length(x.Data),rd2.Data.MeasuredData)
     %rdata.Data.MeasuredData
     
@@ -301,7 +302,21 @@ function handles=preprocess_data(handles)
     a_data.d=handles.d;
     a_data.parameters=handles.parameters;
     a_data.trap_pos=handles.data(:,1:3,:);
-  
+    
+    %% merge with another file with some other data
+    matfilepath = [a_data.name(1:end-4),'mat'];
+    tstamp = datevec(0);
+    if(exist(matfilepath))
+        disp('corresponding .mat file exist, extract timestamp');
+        f = load('matfilepath');
+        tstamp = f.timestamp;
+    else
+        disp('no corresponding .mat file, using epoch as timestamp');
+    end
+    out_data.datevec = tstamp;
+    clear f tstamp matfilepath;
+    
+    
     %get the effective sampling rate
     es=a_data.parameters.Effective_Sampling_Rate.value/2;
     bin_length=round(es/1000); %this ensures a time resolution of about 1ms
@@ -360,7 +375,7 @@ function handles=preprocess_data(handles)
     
     %This point is now used to calculate the indentation
     out_data.indent=out_data.d(pm)-out_data.d(out_data.retr_start);
-    set(handles.text_indent,'String',['Indentation=',num2str(out_data.indent,2),' µm'])
+    set(handles.text_indent,'String',['Indentation=',num2str(out_data.indent,2),' ï¿½m'])
     
     %Now we can also use the 'touching point as reference for the elasticy
     %estimate as a function of the indentation. The formular is:
@@ -434,7 +449,7 @@ d_sel=handles.d(sel1:sel2);
 f_sel=squeeze(handles.f(1,1,sel1:sel2));
 plot(d_sel,f_sel);
 title('Force Distance Plot')
-xlabel('Distance between beads [µm]')
+xlabel('Distance between beads [ï¿½m]')
 ylabel('Force in N')
 
 axes(handles.plot_ft)
@@ -516,7 +531,7 @@ function selectgui(hObject,handles,ha, nos, varargin)
 %       delete(findobj(ha,'Tag','separator'));
 %
 % % %  % %  % %  % %  % %  % %  % %  % %  % %  % %  % %  % %  % %  % %
-% % (c) Tobias Kießling, University of Leipzig, Germany, Oct.21.2010 %
+% % (c) Tobias Kieï¿½ling, University of Leipzig, Germany, Oct.21.2010 %
 % % %  % %  % %  % %  % %  % %  % %  % %  % %  % %  % %  % %  % %  % %
 
 
