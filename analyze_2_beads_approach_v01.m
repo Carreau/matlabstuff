@@ -151,7 +151,7 @@ function load_Callback(hObject, eventdata, handles)
     [dfile,ddir]=uigetfile('*.tdms','Please specify the TDMS file to analyze',ddir);
     handles.actual_set=1;
     file_list.name=[ddir,filesep,dfile];
-    handles.file_list=file_list
+    handles.file_list=file_list;
     handles.ddir=ddir;
     handles.dfile=dfile;
     %now make sure that the save data array is empty
@@ -168,9 +168,9 @@ function handles=preprocess_data(handles)
     
     %r is the bead radius, unfortunately, I do not save that one from the
     %preogram
-    r=4.5e-6/2
+    r=4.5e-6/2;
     %this is the force over which I try to align all the datasets
-    f_align=10e-12
+    f_align=10e-12;
     
     rdata=handles.rdata;
     %now we extract the data from the TDMS files.
@@ -190,13 +190,13 @@ function handles=preprocess_data(handles)
        want=not(want);
     end
     clear s milieu;
-    disp(sprintf('in the filtered data, %d datapoints have been removed', sum(not(want)) ));
+    fprintf('in the filtered data, %d datapoints have been removed', sum(not(want)) );
     
     %% try to change the rdata structure to remove unwanted columns
     %rd2=rdata
-    rd=rdata;
+    %rd=rdata;
     %arrayfun(@(x) disp(length(x.Data)),rd2.Data.MeasuredData)
-    s = sum(not(want))
+    %s = sum(not(want))
     for i = 1:33
         rdata.Data.MeasuredData(i).Data = rdata.Data.MeasuredData(i).Data(want);
         rdata.Data.MeasuredData(i).Total_Samples = rdata.Data.MeasuredData(i).Total_Samples-sum(not(want));
@@ -306,7 +306,7 @@ function handles=preprocess_data(handles)
     %% merge with another file with some other data
     matfilepath = [a_data.name(1:end-4),'mat'];
     tstamp = datevec(0);
-    if(exist(matfilepath))
+    if(exist(matfilepath,file))
         disp('corresponding .mat file exist, extract timestamp');
         f = load('matfilepath');
         tstamp = f.timestamp;
@@ -358,7 +358,8 @@ function handles=preprocess_data(handles)
     out_data.appr_start=tr_d_no0(1);
     out_data.retr_start=tr_d_0(end);
     tr_d_0_cut=tr_d_0;
-    tr_d_0_cut(find(tr_d_0_cut<=tr_d_no0(1)))=[];
+    %tr_d_0_cut(find(tr_d_0_cut<=tr_d_no0(1)))=[];
+    tr_d_0_cut(tr_d_0_cut<=tr_d_no0(1))=[];
     out_data.appr_stop=tr_d_0_cut(1);
     
     %so now I need to estimate the 'touching point'. I will try to do this
@@ -394,8 +395,8 @@ function handles=preprocess_data(handles)
     
     d_t=out_data.d(out_data.appr_stop:out_data.retr_start);
 %   1           -   
-    t_t=[0:length(d_t)-1]*1/out_data.parameters.Effective_Sampling_Rate.value;
-    
+%    t_t=[0:length(d_t)-1]*1/out_data.parameters.Effective_Sampling_Rate.value;
+    t_t=[0:length(d_t)-1]*1/out_data.parameters.Effective_Sampling_Rate.value;    
     start_point = [d_t(1)-d_t(end),d_t(end),t_t(end)];
     %options=optimset('Display','iter');
     %estimates = fminsearch(@exp_dec, start_point,options,t_t,d_t);
@@ -428,7 +429,7 @@ function update_figures(hObject,handles)
 %here we will update the plots, including all, data, selection, fits
 %First we check which range was chosen. If no range was chosen so far, we take all the data
 pos=cell2mat(get(findobj(handles.plot_ft,'Tag','separator'),'XData'));
-if length(pos)==0
+if isempty(pos)
     pos=[.01 .01; ones(1,2)*(length(squeeze(handles.f(1,1,:)))-1)*2/(handles.parameters.Effective_Sampling_Rate.value)];
 end
 
@@ -464,7 +465,7 @@ title('Force Evolution Plot')
 xlabel('Time [s]')
 ylabel('Force in N')
 %now we check if we already have the lines, if not, we create them
-if length(cell2mat(get(findobj(handles.plot_ft,'Tag','separator'),'XData')))==0
+if isempty(cell2mat(get(findobj(handles.plot_ft,'Tag','separator'),'XData')))
     selectgui(hObject,handles,ha,2,pos)
 end
 
@@ -591,7 +592,7 @@ function vsep_callback_moving(hfigure, varargin)    % The WindowsButtonMotionFcn
         if x<low
             x=low;
         elseif x> up
-            x=up
+            x=up;
         end
 
 
@@ -653,7 +654,7 @@ estimates(1)
     
     
 % -------- Do the force evolution fit
-function handles=fit_ft(handles);
+function handles=fit_ft(handles)
 
 f_sel=handles.f_sel;
 
@@ -721,7 +722,7 @@ function take_data_Callback(hObject, eventdata, handles)
 
 a_data=handles.out_data;
 
-if length(handles.save_data)==0
+if isempty(handles.save_data)
     handles.save_data=a_data;
 else
     handles.save_data(end+1)=a_data;
@@ -782,7 +783,7 @@ function file_list=get_subfolders(parent_dir)
     while true % Demo code adapted from the help file.
     [singleSubFolder, remain] = strtok(remain, pathsep);
     if isempty(singleSubFolder), break; end
-    disp(sprintf('%s', singleSubFolder));
+    fprintf('%s', singleSubFolder);
     listOfFolderNames = [listOfFolderNames singleSubFolder];
     d_t=dir([listOfFolderNames{end},filesep,'approach_2beads*.tdms']);
         for i=1:length(d_t)
