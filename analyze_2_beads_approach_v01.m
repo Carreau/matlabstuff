@@ -395,6 +395,7 @@ function handles=preprocess_data(handles)
     set(handles.text_tau,'String',['Rel Time=',num2str(out_data.tau,2),' s'])       
     
     %finally I will get the right regimes for the overlay replotting
+    %(matt) I think that over lay are when the two beads are touching
     out_data.f_app_overlay=squeeze(out_data.f(1,1,1:out_data.appr_stop));
     out_data.f_retr_overlay=squeeze(out_data.f(1,1,out_data.retr_start:end));
     out_data.d_app_overlay=out_data.d(1:out_data.appr_stop)-out_data.d(pm);
@@ -722,97 +723,95 @@ load_dataset(hObject, eventdata, handles)
 
 % --- Executes on button press in ignore_data.
 function ignore_data_Callback(hObject, eventdata, handles)
-% hObject    handle to ignore_data (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-n=handles.actual_set;
-if n+1<=length(handles.file_list)
-    handles.actual_set=n+1;
-end
-load_dataset(hObject, eventdata, handles)
+    % hObject    handle to ignore_data (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    structure with handles and user data (see GUIDATA)
+    n=handles.actual_set;
+    if n+1<=length(handles.file_list)
+        handles.actual_set=n+1;
+    end
+    load_dataset(hObject, eventdata, handles)
 
 % --------------------------------------------------------------------
 function load_dir_Callback(hObject, eventdata, handles)
-% hObject    handle to load_dir (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-ddir=handles.ddir;
-ddir=uigetdir(ddir,'Please specify the parent dir');
-%now make sure that the save data array is empty
-handles.save_data=[];
-set(handles.num_in_save_data,'String','The current number in the save_data struct is 0');
-file_list=get_subfolders(ddir);
-handles.actual_set=1;
-handles.file_list=file_list;
-handles.ddir=ddir;
-guidata(hObject, handles);
-
-%this now loads the next dataset
-load_dataset(hObject, eventdata, handles)
+    % hObject    handle to load_dir (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    structure with handles and user data (see GUIDATA)
+    
+    ddir=handles.ddir;
+    ddir=uigetdir(ddir,'Please specify the parent dir');
+    %now make sure that the save data array is empty
+    handles.save_data=[];
+    set(handles.num_in_save_data,'String','The current number in the save_data struct is 0');
+    file_list=get_subfolders(ddir);
+    handles.actual_set=1;
+    handles.file_list=file_list;
+    handles.ddir=ddir;
+    guidata(hObject, handles);
+    
+    %this now loads the next dataset
+    load_dataset(hObject, eventdata, handles)
 
 
 
 
 %-----------------------------------------------------------
 function file_list=get_subfolders(parent_dir)
-%disp(parent_dir);
-allSubFolders=genpath(parent_dir);
-    
-    % Scan through them separating them.
-remain = allSubFolders;
-listOfFolderNames = {};
-n=1;
-while true % Demo code adapted from the help file.
-[singleSubFolder, remain] = strtok(remain, pathsep);
-if isempty(singleSubFolder), break; end
-disp(sprintf('%s', singleSubFolder));
-listOfFolderNames = [listOfFolderNames singleSubFolder];
-d_t=dir([listOfFolderNames{end},filesep,'approach_2beads*.tdms']);
-    for i=1:length(d_t)
-        file_list(n).name=[listOfFolderNames{end},filesep,d_t(i).name];
-        n=n+1;
+    %disp(parent_dir);
+    allSubFolders=genpath(parent_dir);
+        
+        % Scan through them separating them.
+    remain = allSubFolders;
+    listOfFolderNames = {};
+    n=1;
+    while true % Demo code adapted from the help file.
+    [singleSubFolder, remain] = strtok(remain, pathsep);
+    if isempty(singleSubFolder), break; end
+    disp(sprintf('%s', singleSubFolder));
+    listOfFolderNames = [listOfFolderNames singleSubFolder];
+    d_t=dir([listOfFolderNames{end},filesep,'approach_2beads*.tdms']);
+        for i=1:length(d_t)
+            file_list(n).name=[listOfFolderNames{end},filesep,d_t(i).name];
+            n=n+1;
+        end
     end
-end
 
 
 function load_dataset(hObject, eventdata, handles)
-%now load the TDMS file
-n=handles.actual_set;
-file_list=handles.file_list;
-[rdata]=convertTDMS(0,file_list(n).name);
-set(handles.text3,'String',file_list(n).name)
-
-handles.rdata=rdata;
-handles.dfile=file_list(n).name;
-guidata(hObject, handles);
-
-handles=preprocess_data(handles);
-update_figures(hObject,handles);
-
-
-guidata(hObject, handles);
+    %now load the TDMS file
+    n=handles.actual_set;
+    file_list=handles.file_list;
+    [rdata]=convertTDMS(0,file_list(n).name);
+    set(handles.text3,'String',file_list(n).name)
+    
+    handles.rdata=rdata;
+    handles.dfile=file_list(n).name;
+    guidata(hObject, handles);
+    
+    handles=preprocess_data(handles);
+    update_figures(hObject,handles);
+    
+    guidata(hObject, handles);
 
 
 % --------------------------------------------------------------------
 function save_dat_Callback(hObject, eventdata, handles)
-% hObject    handle to save_dat (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-%now we ask the user where we should store the whole stuff
-%[sfile,spath]=uigetfile('Where should I store the save_data',handles.ddir)
-save_data=handles.save_data;
-uisave('save_data');
+    % hObject    handle to save_dat (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    structure with handles and user data (see GUIDATA)
+    
+    %now we ask the user where we should store the whole stuff
+    %[sfile,spath]=uigetfile('Where should I store the save_data',handles.ddir)
+    save_data=handles.save_data;
+    uisave('save_data');
 
 function out=lin_bin(x,b_size)
-
-%first I ensure that the x is an even multiple of bin size, if not I force
-%it by cutting the first values
-rest=mod(numel(x),b_size);
-if rest~=0
-    x(1:rest)=[];
-end
-%now we reshape and get the mean
-x_i=reshape(x,b_size,numel(x)/b_size);
-out=mean(x_i,1);
+    %first I ensure that the x is an even multiple of bin size, if not I force
+    %it by cutting the first values
+    rest=mod(numel(x),b_size);
+    if rest~=0
+        x(1:rest)=[];
+    end
+    %now we reshape and get the mean
+    x_i=reshape(x,b_size,numel(x)/b_size);
+    out=mean(x_i,1);
