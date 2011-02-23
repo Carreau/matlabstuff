@@ -209,12 +209,12 @@ function handles=preprocess_data(handles)
     %% here we actually do the filtering, putting filterd data into data1 and data2
     %  we also make sure raw data isn't accessible anymore, by clearing it
     
-    disp('fin filtragee');
+    %disp('fin filtragee');
     for i=1:15
         data1(i,:)=rdata.Data.MeasuredData(3+i).Data;
         data2(i,:)=rdata.Data.MeasuredData(18+i).Data;
     end
-    clear rdata rd s want
+    %clear rdata rd s want
     
     %% now we correct for offsets. This assumes that both beads are traps with
     % no force at the beginning!!!!
@@ -306,9 +306,9 @@ function handles=preprocess_data(handles)
     %% merge with another file with some other data
     matfilepath = [a_data.name(1:end-4),'mat'];
     tstamp = datevec(0);
-    if(exist(matfilepath,file))
+    if(exist(matfilepath,'file'))
         disp('corresponding .mat file exist, extract timestamp');
-        f = load('matfilepath');
+        f = load(matfilepath);
         tstamp = f.timestamp;
     else
         disp('no corresponding .mat file, using epoch as timestamp');
