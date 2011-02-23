@@ -1,3 +1,4 @@
+erlgh 
 function [s m] = ebar(files)
 %  files = loadFilesAsCellArray('.','v01.mat');
   rate = m_extractfield(files,'rate');
