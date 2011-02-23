@@ -20,6 +20,7 @@ function varargout = analyze_2_beads_approach_v01(varargin)
     %
     % See also: GUIDE, GUIDATA, GUIHANDLES
     
+    %% on affiche si c'est un version de test
     disp('warning this is still a testing version, it saves data with reomved datapoints');
     %           raw order of data in tdms file :
     % force_and_distancedistance
@@ -99,7 +100,7 @@ function varargout = analyze_2_beads_approach_v01(varargin)
     % End initialization code - DO NOT EDIT
     
     
-    % --- Executes just before analyze_2_beads_approach_v0 is made visible.
+    %% --- Executes just before analyze_2_beads_approach_v0 is made visible.
 function analyze_2_beads_approach_v0_OpeningFcn(hObject, eventdata, handles, varargin)
     % This function has no output args, see OutputFcn.
     % hObject    handle to figure
@@ -123,7 +124,7 @@ function analyze_2_beads_approach_v0_OpeningFcn(hObject, eventdata, handles, var
     % uiwait(handles.figure1);
     
     
-    % --- Outputs from this function are returned to the command line.
+    %% --- Outputs from this function are returned to the command line.
 function varargout = analyze_2_beads_approach_v0_OutputFcn(hObject, eventdata, handles) 
     % varargout  cell array for returning output args (see VARARGOUT);
     % hObject    handle to figure
@@ -150,7 +151,7 @@ function load_Callback(hObject, eventdata, handles)
     [dfile,ddir]=uigetfile('*.tdms','Please specify the TDMS file to analyze',ddir);
     handles.actual_set=1;
     file_list.name=[ddir,filesep,dfile];
-    handles.file_list=file_list
+    handles.file_list=file_list;
     handles.ddir=ddir;
     handles.dfile=dfile;
     %now make sure that the save data array is empty
@@ -167,9 +168,9 @@ function handles=preprocess_data(handles)
     
     %r is the bead radius, unfortunately, I do not save that one from the
     %preogram
-    r=4.5e-6/2
+    r=4.5e-6/2;
     %this is the force over which I try to align all the datasets
-    f_align=10e-12
+    f_align=10e-12;
     
     rdata=handles.rdata;
     %now we extract the data from the TDMS files.
@@ -189,18 +190,18 @@ function handles=preprocess_data(handles)
        want=not(want);
     end
     clear s milieu;
-    disp(sprintf('in the filtered data, %d datapoints have been removed', sum(not(want)) ));
+    fprintf('in the filtered data, %d datapoints have been removed', sum(not(want)) );
     
     %% try to change the rdata structure to remove unwanted columns
     %rd2=rdata
-    rd=rdata;
+    %rd=rdata;
     %arrayfun(@(x) disp(length(x.Data)),rd2.Data.MeasuredData)
-    s = sum(not(want))
+    %s = sum(not(want))
     for i = 1:33
         rdata.Data.MeasuredData(i).Data = rdata.Data.MeasuredData(i).Data(want);
         rdata.Data.MeasuredData(i).Total_Samples = rdata.Data.MeasuredData(i).Total_Samples-sum(not(want));
     end
-    %disp('après filtrage');
+    %disp('aprï¿½s filtrage');
     %arrayfun(@(x) length(x.Data),rd2.Data.MeasuredData)
     %rdata.Data.MeasuredData
     
@@ -208,12 +209,12 @@ function handles=preprocess_data(handles)
     %% here we actually do the filtering, putting filterd data into data1 and data2
     %  we also make sure raw data isn't accessible anymore, by clearing it
     
-    disp('fin filtragee');
+    %disp('fin filtragee');
     for i=1:15
         data1(i,:)=rdata.Data.MeasuredData(3+i).Data;
         data2(i,:)=rdata.Data.MeasuredData(18+i).Data;
     end
-    clear rdata rd s want
+    %clear rdata rd s want
     
     %% now we correct for offsets. This assumes that both beads are traps with
     % no force at the beginning!!!!
@@ -301,7 +302,21 @@ function handles=preprocess_data(handles)
     a_data.d=handles.d;
     a_data.parameters=handles.parameters;
     a_data.trap_pos=handles.data(:,1:3,:);
-  
+    
+    %% merge with another file with some other data
+    matfilepath = [a_data.name(1:end-4),'mat'];
+    tstamp = datevec(0);
+    if(exist(matfilepath,'file'))
+        disp('corresponding .mat file exist, extract timestamp');
+        f = load(matfilepath);
+        tstamp = f.timestamp;
+    else
+        disp('no corresponding .mat file, using epoch as timestamp');
+    end
+    out_data.datevec = tstamp;
+    clear f tstamp matfilepath;
+    
+    
     %get the effective sampling rate
     es=a_data.parameters.Effective_Sampling_Rate.value/2;
     bin_length=round(es/1000); %this ensures a time resolution of about 1ms
@@ -343,7 +358,8 @@ function handles=preprocess_data(handles)
     out_data.appr_start=tr_d_no0(1);
     out_data.retr_start=tr_d_0(end);
     tr_d_0_cut=tr_d_0;
-    tr_d_0_cut(find(tr_d_0_cut<=tr_d_no0(1)))=[];
+    %tr_d_0_cut(find(tr_d_0_cut<=tr_d_no0(1)))=[];
+    tr_d_0_cut(tr_d_0_cut<=tr_d_no0(1))=[];
     out_data.appr_stop=tr_d_0_cut(1);
     
     %so now I need to estimate the 'touching point'. I will try to do this
@@ -360,7 +376,7 @@ function handles=preprocess_data(handles)
     
     %This point is now used to calculate the indentation
     out_data.indent=out_data.d(pm)-out_data.d(out_data.retr_start);
-    set(handles.text_indent,'String',['Indentation=',num2str(out_data.indent,2),' µm'])
+    set(handles.text_indent,'String',['Indentation=',num2str(out_data.indent,2),' ï¿½m'])
     
     %Now we can also use the 'touching point as reference for the elasticy
     %estimate as a function of the indentation. The formular is:
@@ -379,8 +395,8 @@ function handles=preprocess_data(handles)
     
     d_t=out_data.d(out_data.appr_stop:out_data.retr_start);
 %   1           -   
-    t_t=[0:length(d_t)-1]*1/out_data.parameters.Effective_Sampling_Rate.value;
-    
+%    t_t=[0:length(d_t)-1]*1/out_data.parameters.Effective_Sampling_Rate.value;
+    t_t=[0:length(d_t)-1]*1/out_data.parameters.Effective_Sampling_Rate.value;    
     start_point = [d_t(1)-d_t(end),d_t(end),t_t(end)];
     %options=optimset('Display','iter');
     %estimates = fminsearch(@exp_dec, start_point,options,t_t,d_t);
@@ -395,6 +411,7 @@ function handles=preprocess_data(handles)
     set(handles.text_tau,'String',['Rel Time=',num2str(out_data.tau,2),' s'])       
     
     %finally I will get the right regimes for the overlay replotting
+    %(matt) I think that over lay are when the two beads are touching
     out_data.f_app_overlay=squeeze(out_data.f(1,1,1:out_data.appr_stop));
     out_data.f_retr_overlay=squeeze(out_data.f(1,1,out_data.retr_start:end));
     out_data.d_app_overlay=out_data.d(1:out_data.appr_stop)-out_data.d(pm);
@@ -412,7 +429,7 @@ function update_figures(hObject,handles)
 %here we will update the plots, including all, data, selection, fits
 %First we check which range was chosen. If no range was chosen so far, we take all the data
 pos=cell2mat(get(findobj(handles.plot_ft,'Tag','separator'),'XData'));
-if length(pos)==0
+if isempty(pos)
     pos=[.01 .01; ones(1,2)*(length(squeeze(handles.f(1,1,:)))-1)*2/(handles.parameters.Effective_Sampling_Rate.value)];
 end
 
@@ -433,7 +450,7 @@ d_sel=handles.d(sel1:sel2);
 f_sel=squeeze(handles.f(1,1,sel1:sel2));
 plot(d_sel,f_sel);
 title('Force Distance Plot')
-xlabel('Distance between beads [µm]')
+xlabel('Distance between beads [ï¿½m]')
 ylabel('Force in N')
 
 axes(handles.plot_ft)
@@ -448,7 +465,7 @@ title('Force Evolution Plot')
 xlabel('Time [s]')
 ylabel('Force in N')
 %now we check if we already have the lines, if not, we create them
-if length(cell2mat(get(findobj(handles.plot_ft,'Tag','separator'),'XData')))==0
+if isempty(cell2mat(get(findobj(handles.plot_ft,'Tag','separator'),'XData')))
     selectgui(hObject,handles,ha,2,pos)
 end
 
@@ -515,7 +532,7 @@ function selectgui(hObject,handles,ha, nos, varargin)
 %       delete(findobj(ha,'Tag','separator'));
 %
 % % %  % %  % %  % %  % %  % %  % %  % %  % %  % %  % %  % %  % %  % %
-% % (c) Tobias Kießling, University of Leipzig, Germany, Oct.21.2010 %
+% % (c) Tobias Kieï¿½ling, University of Leipzig, Germany, Oct.21.2010 %
 % % %  % %  % %  % %  % %  % %  % %  % %  % %  % %  % %  % %  % %  % %
 
 
@@ -575,7 +592,7 @@ function vsep_callback_moving(hfigure, varargin)    % The WindowsButtonMotionFcn
         if x<low
             x=low;
         elseif x> up
-            x=up
+            x=up;
         end
 
 
@@ -637,7 +654,7 @@ estimates(1)
     
     
 % -------- Do the force evolution fit
-function handles=fit_ft(handles);
+function handles=fit_ft(handles)
 
 f_sel=handles.f_sel;
 
@@ -705,7 +722,7 @@ function take_data_Callback(hObject, eventdata, handles)
 
 a_data=handles.out_data;
 
-if length(handles.save_data)==0
+if isempty(handles.save_data)
     handles.save_data=a_data;
 else
     handles.save_data(end+1)=a_data;
@@ -722,97 +739,95 @@ load_dataset(hObject, eventdata, handles)
 
 % --- Executes on button press in ignore_data.
 function ignore_data_Callback(hObject, eventdata, handles)
-% hObject    handle to ignore_data (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-n=handles.actual_set;
-if n+1<=length(handles.file_list)
-    handles.actual_set=n+1;
-end
-load_dataset(hObject, eventdata, handles)
+    % hObject    handle to ignore_data (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    structure with handles and user data (see GUIDATA)
+    n=handles.actual_set;
+    if n+1<=length(handles.file_list)
+        handles.actual_set=n+1;
+    end
+    load_dataset(hObject, eventdata, handles)
 
 % --------------------------------------------------------------------
 function load_dir_Callback(hObject, eventdata, handles)
-% hObject    handle to load_dir (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-ddir=handles.ddir;
-ddir=uigetdir(ddir,'Please specify the parent dir');
-%now make sure that the save data array is empty
-handles.save_data=[];
-set(handles.num_in_save_data,'String','The current number in the save_data struct is 0');
-file_list=get_subfolders(ddir);
-handles.actual_set=1;
-handles.file_list=file_list;
-handles.ddir=ddir;
-guidata(hObject, handles);
-
-%this now loads the next dataset
-load_dataset(hObject, eventdata, handles)
+    % hObject    handle to load_dir (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    structure with handles and user data (see GUIDATA)
+    
+    ddir=handles.ddir;
+    ddir=uigetdir(ddir,'Please specify the parent dir');
+    %now make sure that the save data array is empty
+    handles.save_data=[];
+    set(handles.num_in_save_data,'String','The current number in the save_data struct is 0');
+    file_list=get_subfolders(ddir);
+    handles.actual_set=1;
+    handles.file_list=file_list;
+    handles.ddir=ddir;
+    guidata(hObject, handles);
+    
+    %this now loads the next dataset
+    load_dataset(hObject, eventdata, handles)
 
 
 
 
 %-----------------------------------------------------------
 function file_list=get_subfolders(parent_dir)
-%disp(parent_dir);
-allSubFolders=genpath(parent_dir);
-    
-    % Scan through them separating them.
-remain = allSubFolders;
-listOfFolderNames = {};
-n=1;
-while true % Demo code adapted from the help file.
-[singleSubFolder, remain] = strtok(remain, pathsep);
-if isempty(singleSubFolder), break; end
-disp(sprintf('%s', singleSubFolder));
-listOfFolderNames = [listOfFolderNames singleSubFolder];
-d_t=dir([listOfFolderNames{end},filesep,'approach_2beads*.tdms']);
-    for i=1:length(d_t)
-        file_list(n).name=[listOfFolderNames{end},filesep,d_t(i).name];
-        n=n+1;
+    %disp(parent_dir);
+    allSubFolders=genpath(parent_dir);
+        
+        % Scan through them separating them.
+    remain = allSubFolders;
+    listOfFolderNames = {};
+    n=1;
+    while true % Demo code adapted from the help file.
+    [singleSubFolder, remain] = strtok(remain, pathsep);
+    if isempty(singleSubFolder), break; end
+    fprintf('%s', singleSubFolder);
+    listOfFolderNames = [listOfFolderNames singleSubFolder];
+    d_t=dir([listOfFolderNames{end},filesep,'approach_2beads*.tdms']);
+        for i=1:length(d_t)
+            file_list(n).name=[listOfFolderNames{end},filesep,d_t(i).name];
+            n=n+1;
+        end
     end
-end
 
 
 function load_dataset(hObject, eventdata, handles)
-%now load the TDMS file
-n=handles.actual_set;
-file_list=handles.file_list;
-[rdata]=convertTDMS(0,file_list(n).name);
-set(handles.text3,'String',file_list(n).name)
-
-handles.rdata=rdata;
-handles.dfile=file_list(n).name;
-guidata(hObject, handles);
-
-handles=preprocess_data(handles);
-update_figures(hObject,handles);
-
-
-guidata(hObject, handles);
+    %now load the TDMS file
+    n=handles.actual_set;
+    file_list=handles.file_list;
+    [rdata]=convertTDMS(0,file_list(n).name);
+    set(handles.text3,'String',file_list(n).name)
+    
+    handles.rdata=rdata;
+    handles.dfile=file_list(n).name;
+    guidata(hObject, handles);
+    
+    handles=preprocess_data(handles);
+    update_figures(hObject,handles);
+    
+    guidata(hObject, handles);
 
 
 % --------------------------------------------------------------------
 function save_dat_Callback(hObject, eventdata, handles)
-% hObject    handle to save_dat (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-%now we ask the user where we should store the whole stuff
-%[sfile,spath]=uigetfile('Where should I store the save_data',handles.ddir)
-save_data=handles.save_data;
-uisave('save_data');
+    % hObject    handle to save_dat (see GCBO)
+    % eventdata  reserved - to be defined in a future version of MATLAB
+    % handles    structure with handles and user data (see GUIDATA)
+    
+    %now we ask the user where we should store the whole stuff
+    %[sfile,spath]=uigetfile('Where should I store the save_data',handles.ddir)
+    save_data=handles.save_data;
+    uisave('save_data');
 
 function out=lin_bin(x,b_size)
-
-%first I ensure that the x is an even multiple of bin size, if not I force
-%it by cutting the first values
-rest=mod(numel(x),b_size);
-if rest~=0
-    x(1:rest)=[];
-end
-%now we reshape and get the mean
-x_i=reshape(x,b_size,numel(x)/b_size);
-out=mean(x_i,1);
+    %first I ensure that the x is an even multiple of bin size, if not I force
+    %it by cutting the first values
+    rest=mod(numel(x),b_size);
+    if rest~=0
+        x(1:rest)=[];
+    end
+    %now we reshape and get the mean
+    x_i=reshape(x,b_size,numel(x)/b_size);
+    out=mean(x_i,1);
