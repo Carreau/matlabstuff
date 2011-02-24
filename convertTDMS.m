@@ -827,8 +827,8 @@ function  [FixedText,TruncFieldName,ValidFieldName]=fixcharformatlab(textin)
 	textin=strrep(textin,'ï¿½','ue');
 	textin=strrep(textin,'ï¿½','ss');
 	textin=strrep(textin,'ï¿½','e');
-	textin=strrep(textin,'ï¿½','deg');
-    textin=strrep(textin,'Âµ','micro');
+	textin=strrep(textin,'°','deg');
+    textin=strrep(textin,'µ','micro');
     textin=strrep(textin,'<','');
     textin=strrep(textin,'>','');
 	
