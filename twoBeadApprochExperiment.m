@@ -21,6 +21,8 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         %force
         moving_trap_force
         still_trap_force
+        %
+        time_m
     end
     methods
         %lazy accesor
@@ -63,6 +65,13 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
             dy = self.moving_trap.y(1)-self.still_trap.y(1);
             theta=angle(dx+1i*dy);
         end
-        
+        function setDatevec(self,year,month,day,h,m,s)
+            for i=1:length(self)
+                self(i).datevec_beggining=[year month day h m s];
+            end
+        end
+        function t =get.time_m(self)
+            t=datenum(self.rawdata.datevec-self.datevec_beggining)*24*60;
+        end;
     end
 end
