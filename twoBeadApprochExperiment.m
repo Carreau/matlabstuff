@@ -2,6 +2,7 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
     %properties, ie actually store variables
     properties
         rawdata
+        %traps position
         still_trap
         moving_trap
         datevec_beggining
@@ -21,10 +22,33 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         %force
         moving_trap_force
         still_trap_force
-        %
+        % time in minutes after datevec_beginning
         time_m
+        %trap distance:
+        trap_distance
+        %E
+        E_final
+        %touch distance
+        touch_d
     end
     methods
+        %lazy accessor
+        function distance = get.touch_d(self)
+            distance = self.trap_distance(self.rawdata.touch_point);
+        end
+        %lazy accessor
+        function e = get.E_final(self)
+            e = self.rawdata.E_final;
+        end
+        %lazy accessor
+        %function d = get.trap_distance(self,point)
+        %   d = sqrt((self.moving_trap.x(point)+ self.still_trap.x(point)).^2 + (self.moving_trap.y(point)-self.still_trap.y(point)).^2);
+        %end
+        function d = get.trap_distance(self)
+           %disp('this is the trap distance in aod units'); 
+           %d = sqrt((self.moving_trap.x+ self.still_trap.x).^2 + (self.moving_trap.y-self.still_trap.y).^2); 
+           d= self.rawdata.d;
+        end
         %lazy accesor
         function f = get.moving_trap_force(self)
             f.x=squeeze(self.rawdata.f(2,1,:));
