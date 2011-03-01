@@ -30,15 +30,21 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         E_final
         %touch distance
         touch_d
+        param
     end
     methods
         %lazy accessor
+        function p = get.param(self)
+            p = self.rawdata.parameters;
+        end
         function distance = get.touch_d(self)
             distance = self.trap_distance(self.rawdata.touch_point);
         end
         %lazy accessor
         function e = get.E_final(self)
-            e = self.rawdata.E_final;
+           for i=1:length(self)
+            e(i) = self(i).rawdata.E_final;
+           end
         end
         %lazy accessor
         %function d = get.trap_distance(self,point)
