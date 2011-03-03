@@ -198,8 +198,8 @@ function handles=preprocess_data(handles)
     %arrayfun(@(x) disp(length(x.Data)),rd2.Data.MeasuredData)
     %s = sum(not(want))
     for i = 1:33
-        rdata.Data.MeasuredData(i).Data = rdata.Data.MeasuredData(i).Data(want);
-        rdata.Data.MeasuredData(i).Total_Samples = rdata.Data.MeasuredData(i).Total_Samples-sum(not(want));
+   %     rdata.Data.MeasuredData(i).Data = rdata.Data.MeasuredData(i).Data(want);
+   %     rdata.Data.MeasuredData(i).Total_Samples = rdata.Data.MeasuredData(i).Total_Samples-sum(not(want));
     end
     %disp('apr�s filtrage');
     %arrayfun(@(x) length(x.Data),rd2.Data.MeasuredData)

@@ -26,18 +26,24 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
     end
     methods
         %lazy accesor
+        function x = applyfun(self,fun)
+            for i=1:length(self)
+                x(i) = fun(self(i));
+            end
+            
+        end;
         function f = get.moving_trap_force(self)
             f.x=squeeze(self.rawdata.f(2,1,:));
             f.y=squeeze(self.rawdata.f(2,2,:));
-            f.tangent=f.x*cos(self.approachAngle)+f.y*sin(self.approachAngle);
-            f.perp=f.x*sin(self.approachAngle)+f.y*cos(self.approachAngle);
+            f.tangent=(f.x * cos(self.approachAngle)) +(f.y *sin(self.approachAngle));
+            f.perp   =(f.x *-sin(self.approachAngle)) +(f.y *cos(self.approachAngle));
         end
         %lazy accessor copy past from previous: not good
         function f = get.still_trap_force(self)
             f.x=squeeze(self.rawdata.f(1,1,:));
             f.y=squeeze(self.rawdata.f(1,2,:));
             f.tangent=f.x*cos(self.approachAngle)+f.y*sin(self.approachAngle);
-            f.perp=f.x*sin(self.approachAngle)+f.y*cos(self.approachAngle);
+            f.perp   =-f.x*sin(self.approachAngle)+f.y*cos(self.approachAngle);
         end
         %constructor
         function obj=twoBeadApprochExperiment(f)
@@ -64,6 +70,7 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
             dx = self.moving_trap.x(1)-self.still_trap.x(1);
             dy = self.moving_trap.y(1)-self.still_trap.y(1);
             theta=angle(dx+1i*dy);
+            %theta=deg2rad(45);
         end
         function setDatevec(self,year,month,day,h,m,s)
             for i=1:length(self)
