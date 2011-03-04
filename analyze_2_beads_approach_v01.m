@@ -22,6 +22,7 @@ function varargout = analyze_2_beads_approach_v01(varargin)
     
     %% on affiche si c'est un version de test
     disp('warning this is still a testing version, it saves data with reomved datapoints');
+    disp('warning this is still a testing version, caracteristics of trap might be switched !');
     %           raw order of data in tdms file :
     % force_and_distancedistance
     % force_and_distanceforce_moving_bead
@@ -229,30 +230,30 @@ function handles=preprocess_data(handles)
     data2(4,:)=data2(4,:)-mean(data2(4,1:a(1)));%ok
     data2(6,:)=data2(6,:)-mean(data2(6,1:a(1)));%ok
     
-    %%createe traps 
+    %% createe traps 
     moving_trap = trap();
     still_trap  = trap();
     
-    %%set traps position ? is it qpd ? 
+    %% set traps position ? is it qpd ? 
     still_trap.pos_aod.x  = data1(4,:);
     still_trap.pos_aod.y  = data1(6,:);
     moving_trap.pos_aod.x = data2(4,:);
     moving_trap.pos_aod.y = data2(6,:);
     
-    %%set factor between AOD value to micrometers
+    %% set factor between AOD value to micrometers
     still_trap.aod_microm.x = parameters.AOD_to_microm_x.value;
     moving_trap.aod_microm.x = parameters.AOD_to_microm_x.value;
     still_trap.aod_microm.y = parameters.AOD_to_microm_y.value;
     moving_trap.aod_microm.y = parameters.AOD_to_microm_y.value;
     
-    %%set  scan slopes for the bead allowing to get position of the bead as
-    %%a fonction of the light deflection, throught dx/dy on the photodiode
+    %% set  scan slopes for the bead allowing to get position of the bead as
+    %  a fonction of the light deflection, throught dx/dy on the photodiode
     still_trap.slopes.x  = parameters.x_slope_bead1.value;
     still_trap.slopes.y  = parameters.y_slope_bead1.value;
     moving_trap.slopes.x = parameters.x_slope_bead2.value;
     moving_trap.slopes.y = parameters.y_slope_bead2.value;
     
-    %%set trap stifness
+    %% set trap stifness
     still_trap.kappa.x  = parameters.x_kappa_bead1.value;
     still_trap.kappa.y  = parameters.y_kappa_bead1.value;
     moving_trap.kappa.x = parameters.x_kappa_bead2.value;
@@ -260,10 +261,10 @@ function handles=preprocess_data(handles)
     
 
     
-    %%additionally, this is the right moment to filter the data, to get rid of
-    % the annoying noise from the bad digital cable
-    % ok maybe later, first I just do a simple bin filter:
-    % (matt), this is done in the upper part of this document 
+    %% additionally, this is the right moment to filter the data, to get rid of
+    %  the annoying noise from the bad digital cable
+    %  ok maybe later, first I just do a simple bin filter:
+    %  (matt), this is done in the upper part of this document 
     
     cal(1)=parameters.AOD_center_X.value;%not used 
     cal(2)=parameters.AOD_center_Y.value;%not used
@@ -281,7 +282,7 @@ function handles=preprocess_data(handles)
     kappa(2,1)=parameters.x_kappa_bead2.value;%ok
     kappa(2,2)=parameters.y_kappa_bead2.value;%ok
     
-    %this corrects for the case that the position was saved in digital AOD
+    %% this corrects for the case that the position was saved in digital AOD
     %units
     if mean(data1(1,:))>1
         data1(1,:)=dig2nor(data1(1,:));
@@ -289,20 +290,22 @@ function handles=preprocess_data(handles)
         data2(1,:)=dig2nor(data2(1,:));
         data2(2,:)=dig2nor(data2(2,:));
     end
-    %%set trap position in AODunits
+    
+    %% set trap position in AODunits
     still_trap.pos_aod.x = data1(1,:);
     still_trap.pos_aod.y = data1(2,:);
     moving_trap.pos_aod.x = data2(1,:);
     moving_trap.pos_aod.y = data2(2,:);
-    %%set trap QPD dx, dy and sum
+    
+    %% set trap QPD dx, dy and sum
     still_trap.QPD_dx    = data1(4,:);
     still_trap.QPD_dy    = data1(6,:);
     still_trap.QPD_sum   = data1(8,:);
     moving_trap.QPD_dx   = data2(4,:);
     moving_trap.QPD_dy   = data2(6,:);
     moving_trap.QPD_sum  = data2(8,:);
-    
-    %recalc the absolute position and put in 12, and 13
+     
+    %% recalc the absolute position and put in 12, and 13
     % absolute position = data1/aod_micron -1/xyslope*dx_qpde/moyenne_sum_Qphotodiode
     % data 12/13 == absolute bead position 
     % data 1/2 == trap absolute position 
@@ -313,19 +316,33 @@ function handles=preprocess_data(handles)
     %moving_trap.absolutebeadposition =
     %data(1,:)/still_trap.aod_microm-1/still_trap.slopes.x*still_trap.QPD_dx
     %./data1(8,:)
-    data1(12,:)=data1(1,:)/cal(5)-1/xy_slopes(1,1)*data1(4,:)./data1(8,:);
-    data1(13,:)=data1(2,:)/cal(6)-1/xy_slopes(1,2)*data1(6,:)./data1(8,:);
+   
+    data1(12,:)=data1(1,:)/cal(5)-1/xy_slopes(1,1)*data1(4,:)./data1(8,:);%ok
+    data1(13,:)=data1(2,:)/cal(6)-1/xy_slopes(1,2)*data1(6,:)./data1(8,:);%ok
     
-    data2(12,:)=data2(1,:)/cal(5)-1/xy_slopes(2,1)*data2(4,:)./data2(8,:);
-    data2(13,:)=data2(2,:)/cal(6)-1/xy_slopes(2,2)*data2(6,:)./data2(8,:);
+    data2(12,:)=data2(1,:)/cal(5)-1/xy_slopes(2,1)*data2(4,:)./data2(8,:);%ok
+    data2(13,:)=data2(2,:)/cal(6)-1/xy_slopes(2,2)*data2(6,:)./data2(8,:);%ok
     
-    %now we recalc the forces as we want the offset substraction to also act on
+    %% fail is the poo isn't working for position 
+    assert(sum(data1(12,:) - still_trap.absolute_bead_pos.x)==0,'still trap absolute bead position doesn''t correspond');
+    assert(sum(data1(13,:) - still_trap.absolute_bead_pos.y)==0,'still trap absolute bead position doesn''t correspond');
+    assert(sum(data2(12,:) - moving_trap.absolute_bead_pos.x)==0,'moving trap absolute bead position doesn''t correspond');
+    assert(sum(data2(13,:) - moving_trap.absolute_bead_pos.y)==0,'moving trap absolute bead position doesn''t correspond');
+    
+    
+    %% now we recalc the forces as we want the offset substraction to also act on
     %the forces
-    data1(14,:)=kappa(1,1)/xy_slopes(1,1)*data1(4,:)./data1(8,:)*1E-6;
-    data1(15,:)=kappa(1,2)/xy_slopes(1,2)*data1(6,:)./data1(8,:)*1E-6;
-    data2(14,:)=kappa(2,1)/xy_slopes(2,1)*data2(4,:)./data2(8,:)*1E-6;
-    data2(15,:)=kappa(2,2)/xy_slopes(2,2)*data2(6,:)./data2(8,:)*1E-6;
+    %data1(14,:)=kappa(1,1)/xy_slopes(1,1)*data1(4,:)./data1(8,:)*1E-6;
+    %data1(15,:)=kappa(1,2)/xy_slopes(1,2)*data1(6,:)./data1(8,:)*1E-6;
+    %data2(14,:)=kappa(2,1)/xy_slopes(2,1)*data2(4,:)./data2(8,:)*1E-6;
+    %data2(15,:)=kappa(2,2)/xy_slopes(2,2)*data2(6,:)./data2(8,:)*1E-6;
     
+    %% fail is the poo isn't working for position 
+    %assert(sum(data1(14,:) - still_trap.force.x)==0,'still trap force x on bead doesn''t correspond');
+    %assert(sum(data1(15,:) - still_trap.force.y)==0,'still trap force y on bead doesn''t correspond');
+    %assert(sum(data2(14,:) - moving_trap.force.x)==0,'moving trap force x on bead doesn''t correspond');
+    %assert(sum(data2(15,:) - moving_trap.force.y)==0,'moving trap force y on bead doesn''t correspond');
+    %%
     data(1,:,:)=data1;
     data(2,:,:)=data2;
     
@@ -371,7 +388,7 @@ function handles=preprocess_data(handles)
     
     %get the effective sampling rate
     es=a_data.parameters.Effective_Sampling_Rate.value/2;
-    bin_length=round(es/50) %this ensures a time resolution of about 1ms
+    bin_length=round(es/50); %this ensures a time resolution of about 1ms
     out_data.name=a_data.name;
     out_data.parameters=a_data.parameters;
     out_data.parameters.Effective_Sampling_Rate.value=es/bin_length;
@@ -425,7 +442,6 @@ function handles=preprocess_data(handles)
     pm_r=pm_r+out_data.retr_start;
     out_data.touch_point_retr=pm_r;
     
-    
     %This point is now used to calculate the indentation
     out_data.indent=out_data.d(pm)-out_data.d(out_data.retr_start);
     set(handles.text_indent,'String',['Indentation=',num2str(out_data.indent,2),' �m'])
@@ -452,7 +468,18 @@ function handles=preprocess_data(handles)
     start_point = [d_t(1)-d_t(end),d_t(end),t_t(end)];
     %options=optimset('Display','iter');
     %estimates = fminsearch(@exp_dec, start_point,options,t_t,d_t);
-    estimates = fminsearch(@exp_dec, start_point,[],t_t,d_t);
+    
+    [estimates,~,exitflag] = fminsearch(@exp_dec, start_point,[],t_t,d_t);
+    
+    %% print an error message if fminsearch doesn't converge
+    if(exitflag <= 0)
+       fprintf('line474, exitflag is %d\n',exitflag);
+       disp('    o     ********************************************************');
+       disp('   / \    *                                                      *');
+       disp('  / | \   * Warnig, fminsearch has faild, value can''t be trusted *');
+       disp(' /  .  \  *                                                      *');
+       disp('o-------o ********************************************************');
+    end
     [sse,exp_fit]=exp_dec(estimates,t_t,d_t);
     estimates;
     out_data.alpha=estimates(1);
