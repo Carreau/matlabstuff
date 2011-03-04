@@ -230,14 +230,14 @@ function handles=preprocess_data(handles)
     data2(6,:)=data2(6,:)-mean(data2(6,1:a(1)));%ok
     
     %%createe traps 
-    moving_trap = trap;
-    still_trap  = trap;
+    moving_trap = trap();
+    still_trap  = trap();
     
     %%set traps position ? is it qpd ? 
-    still_trap.pos.x  = data1(4,:);
-    still_trap.pos.y  = data1(6,:);
-    moving_trap.pos.x = data2(4,:);
-    moving_trap.pos.y = data2(6,:);
+    still_trap.pos_aod.x  = data1(4,:);
+    still_trap.pos_aod.y  = data1(6,:);
+    moving_trap.pos_aod.x = data2(4,:);
+    moving_trap.pos_aod.y = data2(6,:);
     
     %%set factor between AOD value to micrometers
     still_trap.aod_microm.x = parameters.AOD_to_microm_x.value;
