@@ -163,7 +163,6 @@ function load_Callback(hObject, eventdata, handles)
     % --------------------------------------------------------------------
 function handles=preprocess_data(handles)
     % handles    structure with handles and user data (see GUIDATA)
-    
     %here we will preprocess the data. Get absolut positions, and get forces.
     
     %r is the bead radius, unfortunately, I do not save that one from the
@@ -181,26 +180,26 @@ function handles=preprocess_data(handles)
     % due to control bit we need to remove 1 point from time to time
     % let's find the middle value and find on which side ther is the
     % most points
-    clear rd milieu want s;
-    rd = rdata.Data.MeasuredData(4).Data;
-    milieu  = (min(rd)+max(rd))/2;
-    want = rd < milieu;
-    s= sum(want);
-    if(s < length(rd)/10)
-       want=not(want);
-    end
-    clear s milieu;
-    fprintf('in the filtered data, %d datapoints have been removed', sum(not(want)) );
+    %clear rd milieu want s;
+    %rd = rdata.Data.MeasuredData(4).Data;
+    %milieu  = (min(rd)+max(rd))/2;
+    %want = rd < milieu;
+    %s= sum(want);
+    %if(s < length(rd)/10)
+    %   want=not(want);
+    %end
+    %clear s milieu;
+    %fprintf('in the filtered data, %d datapoints have been removed', sum(not(want)) );
     
     %% try to change the rdata structure to remove unwanted columns
     %rd2=rdata
     %rd=rdata;
     %arrayfun(@(x) disp(length(x.Data)),rd2.Data.MeasuredData)
     %s = sum(not(want))
-    for i = 1:33
+    %for i = 1:33
    %     rdata.Data.MeasuredData(i).Data = rdata.Data.MeasuredData(i).Data(want);
    %     rdata.Data.MeasuredData(i).Total_Samples = rdata.Data.MeasuredData(i).Total_Samples-sum(not(want));
-    end
+    %end
     %disp('apr�s filtrage');
     %arrayfun(@(x) length(x.Data),rd2.Data.MeasuredData)
     %rdata.Data.MeasuredData
@@ -225,31 +224,62 @@ function handles=preprocess_data(handles)
         data_=data2; data2=data1;data1=data_;
         a=find(diff(data2(1,:)+data2(2,:))~=0);
     end
-    data1(4,:)=data1(4,:)-mean(data1(4,1:a(1)));
-    data1(6,:)=data1(6,:)-mean(data1(6,1:a(1)));
-    data2(4,:)=data2(4,:)-mean(data2(4,1:a(1)));
-    data2(6,:)=data2(6,:)-mean(data2(6,1:a(1)));
+    data1(4,:)=data1(4,:)-mean(data1(4,1:a(1)));%ok
+    data1(6,:)=data1(6,:)-mean(data1(6,1:a(1)));%ok
+    data2(4,:)=data2(4,:)-mean(data2(4,1:a(1)));%ok
+    data2(6,:)=data2(6,:)-mean(data2(6,1:a(1)));%ok
+    
+    %%createe traps 
+    moving_trap = trap;
+    still_trap  = trap;
+    
+    %%set traps position ? is it qpd ? 
+    still_trap.pos.x  = data1(4,:);
+    still_trap.pos.y  = data1(6,:);
+    moving_trap.pos.x = data2(4,:);
+    moving_trap.pos.y = data2(6,:);
+    
+    %%set factor between AOD value to micrometers
+    still_trap.aod_microm.x = parameters.AOD_to_microm_x.value;
+    moving_trap.aod_microm.x = parameters.AOD_to_microm_x.value;
+    still_trap.aod_microm.y = parameters.AOD_to_microm_y.value;
+    moving_trap.aod_microm.y = parameters.AOD_to_microm_y.value;
+    
+    %%set  scan slopes for the bead allowing to get position of the bead as
+    %%a fonction of the light deflection, throught dx/dy on the photodiode
+    still_trap.slopes.x  = parameters.x_slope_bead1.value;
+    still_trap.slopes.y  = parameters.y_slope_bead1.value;
+    moving_trap.slopes.x = parameters.x_slope_bead2.value;
+    moving_trap.slopes.y = parameters.y_slope_bead2.value;
+    
+    %%set trap stifness
+    still_trap.kappa.x  = parameters.x_kappa_bead1.value;
+    still_trap.kappa.y  = parameters.y_kappa_bead1.value;
+    moving_trap.kappa.x = parameters.x_kappa_bead2.value;
+    moving_trap.kappa.y = parameters.y_kappa_bead2.value;
+    
+
     
     %%additionally, this is the right moment to filter the data, to get rid of
     % the annoying noise from the bad digital cable
     % ok maybe later, first I just do a simple bin filter:
     % (matt), this is done in the upper part of this document 
     
-    cal(1)=parameters.AOD_center_X.value;
-    cal(2)=parameters.AOD_center_Y.value;
-    cal(3)=parameters.AOD_factor_X.value;
-    cal(4)=parameters.AOD_factor_Y.value;
-    cal(5)=parameters.AOD_to_microm_x.value;
-    cal(6)=parameters.AOD_to_microm_y.value;
-    xy_slopes(1,1)=parameters.x_slope_bead1.value;
-    xy_slopes(1,2)=parameters.y_slope_bead1.value;
-    xy_slopes(2,1)=parameters.x_slope_bead2.value;
-    xy_slopes(2,2)=parameters.y_slope_bead2.value;
+    cal(1)=parameters.AOD_center_X.value;%not used 
+    cal(2)=parameters.AOD_center_Y.value;%not used
+    cal(3)=parameters.AOD_factor_X.value;%not used 
+    cal(4)=parameters.AOD_factor_Y.value;%not used
+    cal(5)=parameters.AOD_to_microm_x.value;%ok
+    cal(6)=parameters.AOD_to_microm_y.value;%ok
+    xy_slopes(1,1)=parameters.x_slope_bead1.value;%ok
+    xy_slopes(1,2)=parameters.y_slope_bead1.value;%ok
+    xy_slopes(2,1)=parameters.x_slope_bead2.value;%ok
+    xy_slopes(2,2)=parameters.y_slope_bead2.value;%ok
     
-    kappa(1,1)=parameters.x_kappa_bead1.value;
-    kappa(1,2)=parameters.y_kappa_bead1.value;
-    kappa(2,1)=parameters.x_kappa_bead2.value;
-    kappa(2,2)=parameters.y_kappa_bead2.value;
+    kappa(1,1)=parameters.x_kappa_bead1.value;%ok
+    kappa(1,2)=parameters.y_kappa_bead1.value;%ok
+    kappa(2,1)=parameters.x_kappa_bead2.value;%ok
+    kappa(2,2)=parameters.y_kappa_bead2.value;%ok
     
     %this corrects for the case that the position was saved in digital AOD
     %units
@@ -259,8 +289,30 @@ function handles=preprocess_data(handles)
         data2(1,:)=dig2nor(data2(1,:));
         data2(2,:)=dig2nor(data2(2,:));
     end
-        
+    %%set trap position in AODunits
+    still_trap.pos_aod.x = data1(1,:);
+    still_trap.pos_aod.y = data1(2,:);
+    moving_trap.pos_aod.x = data2(1,:);
+    moving_trap.pos_aod.y = data2(2,:);
+    %%set trap QPD dx, dy and sum
+    still_trap.QPD_dx    = data1(4,:);
+    still_trap.QPD_dy    = data1(6,:);
+    still_trap.QPD_sum   = data1(8,:);
+    moving_trap.QPD_dx   = data2(4,:);
+    moving_trap.QPD_dy   = data2(6,:);
+    moving_trap.QPD_sum  = data2(8,:);
+    
     %recalc the absolute position and put in 12, and 13
+    % absolute position = data1/aod_micron -1/xyslope*dx_qpde/moyenne_sum_Qphotodiode
+    % data 12/13 == absolute bead position 
+    % data 1/2 == trap absolute position 
+    % cal  5/6 == conversion from data to position in \mu m
+    % data 4/6 == dx/dy QPD
+    % data 8   == sum QPD
+    
+    %moving_trap.absolutebeadposition =
+    %data(1,:)/still_trap.aod_microm-1/still_trap.slopes.x*still_trap.QPD_dx
+    %./data1(8,:)
     data1(12,:)=data1(1,:)/cal(5)-1/xy_slopes(1,1)*data1(4,:)./data1(8,:);
     data1(13,:)=data1(2,:)/cal(6)-1/xy_slopes(1,2)*data1(6,:)./data1(8,:);
     
@@ -295,7 +347,7 @@ function handles=preprocess_data(handles)
     handles.data=data;
     handles.parameters=parameters;
     
-    %now we will already filter the data to have it less heavy, and also apply
+    %now we will already filter the da1a to have it less heavy, and also apply
     %the calculation of the values of interest
     a_data.name=handles.file_list(handles.actual_set).name;
     a_data.f=handles.f; plot(squeeze(handles.f(1,1,:)))
@@ -319,18 +371,18 @@ function handles=preprocess_data(handles)
     
     %get the effective sampling rate
     es=a_data.parameters.Effective_Sampling_Rate.value/2;
-    bin_length=round(es/1000); %this ensures a time resolution of about 1ms
+    bin_length=round(es/50) %this ensures a time resolution of about 1ms
     out_data.name=a_data.name;
     out_data.parameters=a_data.parameters;
     out_data.parameters.Effective_Sampling_Rate.value=es/bin_length;
-    out_data.d=lin_bin(a_data.d,bin_length);
+    out_data.d=slidingavg(lin_bin(a_data.d,bin_length),20);
     f_in=a_data.f;
     t_in=a_data.trap_pos;
     clear f_out t_out;
     for k=1:2
         for l=1:2
-            f_out(k,l,:)=lin_bin(f_in(k,l,:),bin_length);
-            t_out(k,l,:)=lin_bin(t_in(k,l,:),bin_length);
+            f_out(k,l,:)=slidingavg(lin_bin(f_in(k,l,:),bin_length),20);
+            t_out(k,l,:)=slidingavg(lin_bin(t_in(k,l,:),bin_length),20);
         end
     end
     out_data.f=f_out;
