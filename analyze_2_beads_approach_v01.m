@@ -503,64 +503,64 @@ function handles=preprocess_data(handles)
 %guidata(hObject, handles);
 % --------------------------------------------------------------------
 function update_figures(hObject,handles)
-% handles    structure with handles and user data (see GUIDATA)
-
-%here we will update the plots, including all, data, selection, fits
-%First we check which range was chosen. If no range was chosen so far, we take all the data
-pos=cell2mat(get(findobj(handles.plot_ft,'Tag','separator'),'XData'));
-if isempty(pos)
-    pos=[.01 .01; ones(1,2)*(length(squeeze(handles.f(1,1,:)))-1)*2/(handles.parameters.Effective_Sampling_Rate.value)];
-end
-
-%make sure that the first slider is for a smaller value than the second
-if diff(pos(:,1))<0
-    pos=flipud(pos);
-end
-%check if any of the values is out of bounds
-pos(1,1)=inrange(pos(1,1),0,(length(squeeze(handles.f(1,1,:)))-1)*2/(handles.parameters.Effective_Sampling_Rate.value));
-pos(2,1)=inrange(pos(2,1),0,(length(squeeze(handles.f(1,1,:)))-1)*2/(handles.parameters.Effective_Sampling_Rate.value));
-
-
-
-axes(handles.plot_fd)
-sel1=round(pos(1,1)/2*(handles.parameters.Effective_Sampling_Rate.value))+1;
-sel2=round(pos(2,1)/2*(handles.parameters.Effective_Sampling_Rate.value));
-d_sel=handles.d(sel1:sel2);
-f_sel=squeeze(handles.f(1,1,sel1:sel2));
-plot(d_sel,f_sel);
-title('Force Distance Plot')
-xlabel('Distance between beads [�m]')
-ylabel('Force in N')
-
-axes(handles.plot_ft)
-ha=gca;
-%the position of the actual selector lines
-plot([0:length(squeeze(handles.f(1,1,:)))-1]*2/(handles.parameters.Effective_Sampling_Rate.value),squeeze(handles.f(1,1,:)));
-hold on;
-plot([0:length(squeeze(handles.f(2,1,:)))-1]*2/(handles.parameters.Effective_Sampling_Rate.value),squeeze(handles.f(2,1,:)),'k')
-hold off;
-
-title('Force Evolution Plot')
-xlabel('Time [s]')
-ylabel('Force in N')
-%now we check if we already have the lines, if not, we create them
-if isempty(cell2mat(get(findobj(handles.plot_ft,'Tag','separator'),'XData')))
-    selectgui(hObject,handles,ha,2,pos)
-end
-
-axes(handles.plot_ft_sel)
-ha=gca;
-%the position of the actual selector lines
-plot([0:length(d_sel)-1]*2/(handles.parameters.Effective_Sampling_Rate.value),f_sel);
-title('Force Evolution Plot')
-xlabel('Time [s]')
-ylabel('Force in N')
-
-%update the handles structure
-handles.d_sel=d_sel';
-handles.f_sel=f_sel;
-
-guidata(hObject, handles);
+    % handles    structure with handles and user data (see GUIDATA)
+    
+    %here we will update the plots, including all, data, selection, fits
+    %First we check which range was chosen. If no range was chosen so far, we take all the data
+    pos=cell2mat(get(findobj(handles.plot_ft,'Tag','separator'),'XData'));
+    if isempty(pos)
+        pos=[.01 .01; ones(1,2)*(length(squeeze(handles.f(1,1,:)))-1)*2/(handles.parameters.Effective_Sampling_Rate.value)];
+    end
+    
+    %make sure that the first slider is for a smaller value than the second
+    if diff(pos(:,1))<0
+        pos=flipud(pos);
+    end
+    %check if any of the values is out of bounds
+    pos(1,1)=inrange(pos(1,1),0,(length(squeeze(handles.f(1,1,:)))-1)*2/(handles.parameters.Effective_Sampling_Rate.value));
+    pos(2,1)=inrange(pos(2,1),0,(length(squeeze(handles.f(1,1,:)))-1)*2/(handles.parameters.Effective_Sampling_Rate.value));
+    
+    
+    
+    axes(handles.plot_fd)
+    sel1=round(pos(1,1)/2*(handles.parameters.Effective_Sampling_Rate.value))+1;
+    sel2=round(pos(2,1)/2*(handles.parameters.Effective_Sampling_Rate.value));
+    d_sel=handles.d(sel1:sel2);
+    f_sel=squeeze(handles.f(1,1,sel1:sel2));
+    plot(d_sel,f_sel);
+    title('Force Distance Plot')
+    xlabel('Distance between beads [�m]')
+    ylabel('Force in N')
+    
+    axes(handles.plot_ft)
+    ha=gca;
+    %the position of the actual selector lines
+    plot([0:length(squeeze(handles.f(1,1,:)))-1]*2/(handles.parameters.Effective_Sampling_Rate.value),squeeze(handles.f(1,1,:)));
+    hold on;
+    plot([0:length(squeeze(handles.f(2,1,:)))-1]*2/(handles.parameters.Effective_Sampling_Rate.value),squeeze(handles.f(2,1,:)),'k')
+    hold off;
+    
+    title('Force Evolution Plot')
+    xlabel('Time [s]')
+    ylabel('Force in N')
+    %now we check if we already have the lines, if not, we create them
+    if isempty(cell2mat(get(findobj(handles.plot_ft,'Tag','separator'),'XData')))
+        selectgui(hObject,handles,ha,2,pos)
+    end
+    
+    axes(handles.plot_ft_sel)
+    ha=gca;
+    %the position of the actual selector lines
+    plot([0:length(d_sel)-1]*2/(handles.parameters.Effective_Sampling_Rate.value),f_sel);
+    title('Force Evolution Plot')
+    xlabel('Time [s]')
+    ylabel('Force in N')
+    
+    %update the handles structure
+    handles.d_sel=d_sel';
+    handles.f_sel=f_sel;
+    
+    guidata(hObject, handles);
 
 %  ---- This is the function from Tobias, that creates the two lines
 function selectgui(hObject,handles,ha, nos, varargin)
