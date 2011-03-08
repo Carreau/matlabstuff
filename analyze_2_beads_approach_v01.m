@@ -323,7 +323,7 @@ function handles=preprocess_data(handles)
     data2(12,:)=data2(1,:)/cal(5)-1/xy_slopes(2,1)*data2(4,:)./data2(8,:);%ok
     data2(13,:)=data2(2,:)/cal(6)-1/xy_slopes(2,2)*data2(6,:)./data2(8,:);%ok
     
-    %% fail is the poo isn't working for position 
+    %% fail if the poo isn't working for position 
     assert(sum(data1(12,:) - still_trap.absolute_bead_pos.x)==0,'still trap absolute bead position doesn''t correspond');
     assert(sum(data1(13,:) - still_trap.absolute_bead_pos.y)==0,'still trap absolute bead position doesn''t correspond');
     assert(sum(data2(12,:) - moving_trap.absolute_bead_pos.x)==0,'moving trap absolute bead position doesn''t correspond');
@@ -343,16 +343,28 @@ function handles=preprocess_data(handles)
     %assert(sum(data2(14,:) - moving_trap.force.x)==0,'moving trap force x on bead doesn''t correspond');
     %assert(sum(data2(15,:) - moving_trap.force.y)==0,'moving trap force y on bead doesn''t correspond');
     %%
-    data(1,:,:)=data1;
-    data(2,:,:)=data2;
+    
+    data(1,:,:)=data1;%ok, stored as moving_trap
+    data(2,:,:)=data2;%ok, stored as still_trap
     
     d=sqrt((data1(12,:)-data2(12,:)).^2+(data1(13,:)-data2(13,:)).^2);
-    %now we change the coordinate system to see the forces parallel and
-    %perpendicular of the two beads. These forces will be saved in the forces
-    %array
+    %% now we change the coordinate system to see the forces parallel and
+    %  perpendicular of the two beads. These forces will be saved in the forces
+    %  array
+    % data1(1,1) piege1.x (t=0)
+    % data2(1,2) piege2.x (t=0)
+    % data1(2,1) piege1.y (t=0)
+    % data2(2,2) piege2.y (t=0)
+    % j'ai fait à peu près la même chose avec angle dans
+    % twoBeadapprochexperiement, à voir
+    %   / \
+    %  / | \ à revérifier
+    % /  o  \
     alp=cart2pol(data1(1,1)-data2(1,1),data1(2,1)-data2(2,1))+pi;
     [ft,fr]=cart2pol(data1(14,:),data1(15,:));
+    
     [f(1,1,:),f(1,2,:)]=pol2cart(ft+alp,fr);
+    
     [ft,fr]=cart2pol(data2(14,:),data2(15,:));
     [f(2,1,:),f(2,2,:)]=pol2cart(ft+alp,fr);
     
@@ -398,8 +410,8 @@ function handles=preprocess_data(handles)
     clear f_out t_out;
     for k=1:2
         for l=1:2
-            f_out(k,l,:)=slidingavg(lin_bin(f_in(k,l,:),bin_length),20);
-            t_out(k,l,:)=slidingavg(lin_bin(t_in(k,l,:),bin_length),20);
+            f_out(k,l,:)=lin_bin(f_in(k,l,:),bin_length);
+            t_out(k,l,:)=lin_bin(t_in(k,l,:),bin_length);
         end
     end
     out_data.f=f_out;
@@ -419,17 +431,28 @@ function handles=preprocess_data(handles)
     %
     %now get the points where the approach stated and ended, and where the
     %retraction started
-    tr=out_data.trap_pos;
-    tr_m=sqrt(squeeze(tr(2,1,:)).^2+squeeze(tr(2,2,:)).^2);
-    tr_d_0=find(diff(tr_m)==0);
-    tr_d_no0=find(diff(tr_m)~=0);
+    trp=out_data.trap_pos;
+    trp_m=sqrt(squeeze(trp(2,1,:)).^2+squeeze(trp(2,2,:)).^2);
+    trp_d_0=find(diff(trp_m)==0);
+    trp_d_no0=find(diff(trp_m)~=0);
     
-    out_data.appr_start=tr_d_no0(1);
-    out_data.retr_start=tr_d_0(end);
-    tr_d_0_cut=tr_d_0;
+    out_data.appr_start=trp_d_no0(1);
+    out_data.retr_start=trp_d_0(end);
+    trp_d_0_cut=trp_d_0;
     %tr_d_0_cut(find(tr_d_0_cut<=tr_d_no0(1)))=[];
-    tr_d_0_cut(tr_d_0_cut<=tr_d_no0(1))=[];
-    out_data.appr_stop=tr_d_0_cut(1);
+    trp_d_0_cut(trp_d_0_cut<=trp_d_no0(1))=[];
+    out_data.appr_stop=trp_d_0_cut(1);
+    moving_trap.linbinvalue = bin_length;
+    still_trap.linbinvalue = bin_length;
+    disp('testing assert');
+    
+    %% for now, let be sure the values are still the same ! 
+    assert( (moving_trap.event_lb.appr.start == out_data.appr_start) );
+    assert( (moving_trap.event_lb.appr.stop == out_data.appr_stop) );
+    assert( (moving_trap.event_lb.retr.start == out_data.retr_start) );
+    
+    
+    
     
     %so now I need to estimate the 'touching point'. I will try to do this
     %by getting the point where the forces are bigger than f_align
@@ -444,7 +467,7 @@ function handles=preprocess_data(handles)
     
     %This point is now used to calculate the indentation
     out_data.indent=out_data.d(pm)-out_data.d(out_data.retr_start);
-    set(handles.text_indent,'String',['Indentation=',num2str(out_data.indent,2),' ï¿½m'])
+    set(handles.text_indent,'String',['Indentation=',num2str(out_data.indent,2),' micro_m'])
     
     %Now we can also use the 'touching point as reference for the elasticy
     %estimate as a function of the indentation. The formular is:
@@ -454,7 +477,8 @@ function handles=preprocess_data(handles)
     d_ind=-(d_ind-d_ind(1))*1e-6;
     out_data.E=(f_ind-f_align)*3*(1-0.5^2)./(4*d_ind.^(3/2)*sqrt(r));
     out_data.E_final=mean(out_data.E(round(numel(out_data.E)/2:end)));
-
+    out_data.moving_trap = moving_trap;
+    out_data.still_trap = still_trap;
     set(handles.text_E,'String',['Youngs Mod=',num2str(out_data.E_final,2),' Pa'])   
     
     
