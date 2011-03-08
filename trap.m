@@ -43,7 +43,7 @@ classdef trap < handle
             ret.x = linbin(data.x,self.linbinvalue);
             ret.y = linbin(data.y,self.linbinvalue);
             ret.r = linbin(data.r,self.linbinvalue);
-            ret.theta = linbin(f.theta,self.linbinvalue);
+            ret.theta = linbin(data.theta,self.linbinvalue);
         end
         function ret=get.bead_pos_in_trap_lb(self)
             ret = lbxyrt(self,self.bead_pos_in_trap);
@@ -90,23 +90,23 @@ classdef trap < handle
         function ret = get.pos_um(self)
             ret.x = self.pos_aod.x ./ self.aod_microm.x; 
             ret.y = self.pos_aod.y ./ self.aod_microm.y;
-            [ret.theta,ret.r] = cat2pol(ret.x,ret.y);
+            [ret.theta,ret.r] = cart2pol(ret.x,ret.y);
         end
         function ret = get.bead_pos_in_trap(self)
             ret.x = -1./self.slopes.x*self.QPD_dx./self.QPD_sum;
             ret.y = -1./self.slopes.y*self.QPD_dy./self.QPD_sum;
-            [ret.theta,ret.r] = cat2pol(ret.x,ret.y);
+            [ret.theta,ret.r] = cart2pol(ret.x,ret.y);
         end
         function ret=get.absolute_bead_pos(self)
             ret.x = self.pos_aod.x./self.aod_microm.x + self.bead_pos_in_trap.x;
             ret.y = self.pos_aod.y./self.aod_microm.y + self.bead_pos_in_trap.y;
-            [ret.theta,ret.r] = cat2pol(ret.x,ret.y);
+            [ret.theta,ret.r] = cart2pol(ret.x,ret.y);
         end
         function ret=get.force(self)
             %1E-6 car kappa doit être en pN/m ou N/mu m
             ret.x = self.kappa.x/self.slopes.x*self.QPD_dx ./ self.QPD_sum * 1E-6;
             ret.y = self.kappa.y/self.slopes.y*self.QPD_dy ./ self.QPD_sum * 1E-6;
-            [ret.theta,ret.r] = cat2pol(ret.x,ret.y);
+            [ret.theta,ret.r] = cart2pol(ret.x,ret.y);
         end
     end
 
