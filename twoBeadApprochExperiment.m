@@ -6,6 +6,7 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         still_trap
         moving_trap
         datevec_beggining
+        fTouchDetection
     end
     %properties that are recalculed when accessed (ie depend on rawdata)
     properties(Dependent)
