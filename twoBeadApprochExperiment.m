@@ -80,10 +80,8 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
             obj.rawdata=f;
             obj.datevec_beggining=datevec(0);
             g = f.trap_pos;
-            obj.still_trap.x = squeeze(g(1,1,:));
-            obj.still_trap.y = squeeze(g(1,2,:));
-            obj.moving_trap.x = squeeze(g(2,1,:));
-            obj.moving_trap.y = squeeze(g(2,2,:));
+            obj.still_trap = f.still_trap;
+            obj.moving_trap = f.moving_trap;
         end
         %lazy accesor (convenient)
         function theta=get.approachAngleDeg(self)
@@ -97,8 +95,8 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         
         %lazy accesor
         function theta=get.approachAngle(self)
-            dx = self.moving_trap.x(1)-self.still_trap.x(1);
-            dy = self.moving_trap.y(1)-self.still_trap.y(1);
+            dx = self.moving_trap.pos_um.x(1)-self.still_trap.pos_um.x(1);
+            dy = self.moving_trap.pos_um.y(1)-self.still_trap.pos_um.y(1);
             theta=angle(dx+1i*dy);
             %theta=deg2rad(45);
         end
