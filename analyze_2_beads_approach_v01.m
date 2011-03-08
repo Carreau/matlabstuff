@@ -448,7 +448,7 @@ function handles=preprocess_data(handles)
     
     %% for now, let be sure the values are still the same ! 
     assert( (moving_trap.event_lb.appr.start == out_data.appr_start) );
-    assert( (moving_trap.event_lb.appr.stop == out_data.appr_stop) );
+    assert( (moving_trap.event_lb.appr.stop  == out_data.appr_stop ) );
     assert( (moving_trap.event_lb.retr.start == out_data.retr_start) );
     
     
