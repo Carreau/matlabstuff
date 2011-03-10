@@ -17,3 +17,4 @@ function [young distance] = youngdistance(s)
     hold on;
     plot(s.time_m,experiment.d(experiment.touch_point),'b+');
     hold off;
+end
