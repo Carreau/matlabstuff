@@ -7,6 +7,7 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         moving_trap
         datevec_beggining
         fTouchDetection
+        fitvalue
     end
     %properties that are recalculed when accessed (ie depend on rawdata)
     properties(Dependent)
@@ -27,13 +28,37 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         time_m
         %trap distance:
         trap_distance
+        bead_distance
         %E
         E_final
         %touch distance
         touch_d
         param
     end
+    %% calcul du module d'young 
+    % %F=4/3*E/(1-(nu)^2).*d.^(3/2)*sqrt(r)+f0;
+    % avec 
+    % F force sur la bille
+    % E module d'young
+    % nu coefficient de poisson 
+    % d ?
+    % ?
+    % f0
     methods
+        function fit(self)
+           for i=1:length(self)
+                f = self(i).still_trap.force.r(1:self(i).moving_trap.event.appr.stop);
+                d = self(i).bead_distance     (1:self(i).moving_trap.event.appr.stop);
+                %plot(d,f);
+                [d0,f0,E,err] = youngfit(d,f);
+                self(i).fitvalue.d0  = d0;
+                self(i).fitvalue.f0  = f0;
+                self(i).fitvalue.E   = E*1e12;
+                self(i).fitvalue.err = err*1E20;
+           end
+           
+        end
+        
         %lazy accessor
         function p = get.param(self)
             p = self.rawdata.parameters;
@@ -53,8 +78,17 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         %end
         function d = get.trap_distance(self)
            %disp('this is the trap distance in aod units'); 
-           %d = sqrt((self.moving_trap.x+ self.still_trap.x).^2 + (self.moving_trap.y-self.still_trap.y).^2); 
+           %d = sqrt((self.moving_trap.x+ self.still_trap.x).^2 +
+           %(self.moving_trap.y-self.still_trap.y).^2); 
            d= self.rawdata.d;
+        end
+        
+        function d= get.bead_distance(self)
+           mb = self.moving_trap.absolute_bead_pos;
+           sb = self.still_trap.absolute_bead_pos;
+           dx = sb.x-mb.x;
+           dy = sb.y-mb.y;
+           d = sqrt( dx .^2 + dy .^2); 
         end
         %lazy accesor
         function x = applyfun(self,fun)
