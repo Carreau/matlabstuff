@@ -45,6 +45,31 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
     % ?
     % f0
     methods
+        function ret = description(self)
+            ret=[];fprintf('filename\tyyyy-mm-dd hh:mm\tangl\tspeed\trest_time\n');
+             for i=1:length(self)
+                s=self(i);
+                format = '';
+                [pathstr, name, ext] = fileparts(s.rawdata.name);
+                [~, sub , ~  ] = fileparts(pathstr);
+                A=sprintf('%s/%s%s',sub(end-3:end),name(end-2:end),ext);
+                format = strcat(format,'%s\t');
+
+                A2 = s.rawdata.datevec(1:5);
+                format = strcat(format,'%04i-%02i-%02i %02i:%02i\t');
+    
+                A3 = s.approachAngleDeg;
+                format = strcat(format,'%4.0f\t');
+
+                A4 = s.param.speed.value;
+                format = strcat(format,'%3i\t');
+     
+                A5 = s.param.resting_time.value;
+                format = strcat(format,'%3i\t');
+    
+                ret = [ret;sprintf(format,A,A2,A3,A4,A5)];
+             end
+        end
         function fit(self)
            for i=1:length(self)
                 f = self(i).still_trap.force.r(1:self(i).moving_trap.event.appr.stop);
@@ -60,7 +85,7 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         end
         
         %lazy accessor
-        function p = get.param(self)
+        function p = get.param(self)        
             p = self.rawdata.parameters;
         end
         function distance = get.touch_d(self)
