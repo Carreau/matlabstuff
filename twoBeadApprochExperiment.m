@@ -8,6 +8,7 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         datevec_beggining
         fTouchDetection
         fitvalue
+        commentaire
     end
     %properties that are recalculed when accessed (ie depend on rawdata)
     properties(Dependent)
@@ -45,6 +46,11 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
     % ?
     % f0
     methods
+        function setCommentaire(self,str)
+            for i = 1:length(self)
+               self(i).commentaire=str; 
+            end
+        end
         function ret = description(self)
             ret=[];fprintf('filename\tyyyy-mm-dd hh:mm\tangl\tspeed\trest_time\n');
              for i=1:length(self)
@@ -74,12 +80,16 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
            for i=1:length(self)
                 f = self(i).still_trap.force.r(1:self(i).moving_trap.event.appr.stop);
                 d = self(i).bead_distance     (1:self(i).moving_trap.event.appr.stop);
-                %plot(d,f);
-                [d0,f0,E,err] = youngfit(d,f);
+                %l=length(f);
+                %n=50;
+                %f0 = f(1:floor(l/n):end);
+                %d0 = d(1:floor(l/n):end);
+                [d0,f0,E,err,drift] = youngfit(d,f);
                 self(i).fitvalue.d0  = d0;
                 self(i).fitvalue.f0  = f0;
                 self(i).fitvalue.E   = E*1e12;
                 self(i).fitvalue.err = err*1E20;
+                self(i).fitvalue.drift = drift;
            end
            
         end
