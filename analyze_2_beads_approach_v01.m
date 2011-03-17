@@ -476,14 +476,14 @@ function handles=preprocess_data(handles)
     %Now we can also use the 'touching point as reference for the elasticy
     %estimate as a function of the indentation. The formular is:
     %F=4/3*E/(1-(nu)^2).*d.^(3/2)*sqrt(r)+f0;
-    f_ind=squeeze(out_data.f(1,1,pm:out_data.appr_stop))';
-    d_ind=out_data.d(pm:out_data.appr_stop);
-    d_ind=-(d_ind-d_ind(1))*1e-6;
-    out_data.E=(f_ind-f_align)*3*(1-0.5^2)./(4*d_ind.^(3/2)*sqrt(r));
-    out_data.E_final=mean(out_data.E(round(numel(out_data.E)/2:end)));
+    %f_ind=squeeze(out_data.f(1,1,pm:out_data.appr_stop))';
+    %d_ind=out_data.d(pm:out_data.appr_stop);
+    %d_ind=-(d_ind-d_ind(1))*1e-6;
+    %out_data.E=(f_ind-f_align)*3*(1-0.5^2)./(4*d_ind.^(3/2)*sqrt(r));
+    %out_data.E_final=mean(out_data.E(round(numel(out_data.E)/2:end)));
     out_data.moving_trap = moving_trap;
     out_data.still_trap = still_trap;
-    set(handles.text_E,'String',['Youngs Mod=',num2str(out_data.E_final,2),' Pa'])   
+    %set(handles.text_E,'String',['Youngs Mod=',num2str(out_data.E_final,2),' Pa'])   
     
     
     %Next is the exponential decay first extract the regime from the data,
@@ -493,36 +493,36 @@ function handles=preprocess_data(handles)
 %   1           -   
 %    t_t=[0:length(d_t)-1]*1/out_data.parameters.Effective_Sampling_Rate.value;
     t_t=[0:length(d_t)-1]*1/out_data.parameters.Effective_Sampling_Rate.value;    
-    start_point = [d_t(1)-d_t(end),d_t(end),t_t(end)];
+    %start_point = [d_t(1)-d_t(end),d_t(end),t_t(end)];
     %options=optimset('Display','iter');
     %estimates = fminsearch(@exp_dec, start_point,options,t_t,d_t);
     
-    [estimates,~,exitflag] = fminsearch(@exp_dec, start_point,[],t_t,d_t);
+    %[estimates,~,exitflag] = fminsearch(@exp_dec, start_point,[],t_t,d_t);
     
     %% print an error message if fminsearch doesn't converge
-    if(exitflag <= 0)
-       fprintf('line474, exitflag is %d\n',exitflag);
-       disp('    o     ********************************************************');
-       disp('   / \    *                                                      *');
-       disp('  / | \   * Warnig, fminsearch has faild, value can''t be trusted *');
-       disp(' /  .  \  *                                                      *');
-       disp('o-------o ********************************************************');
-    end
-    [sse,exp_fit]=exp_dec(estimates,t_t,d_t);
-    estimates;
-    out_data.alpha=estimates(1);
-    out_data.tau=estimates(3);
-    out_data.d0=estimates(2);
-    out_data.rel_decay=estimates(1)/estimates(2);
+    %if(exitflag <= 0)
+    %   fprintf('line474, exitflag is %d\n',exitflag);
+    %   disp('    o     ********************************************************');
+    %   disp('   / \    *                                                      *');
+    %   disp('  / | \   * Warnig, fminsearch has faild, value can''t be trusted *');
+    %   disp(' /  .  \  *                                                      *');
+    %   disp('o-------o ********************************************************');
+    %end
+    %[sse,exp_fit]=exp_dec(estimates,t_t,d_t);
+    %estimates;
+    %out_data.alpha=estimates(1);
+    %out_data.tau=estimates(3);
+    %out_data.d0=estimates(2);
+    %out_data.rel_decay=estimates(1)/estimates(2);
     
-    set(handles.text_tau,'String',['Rel Time=',num2str(out_data.tau,2),' s'])       
+    %set(handles.text_tau,'String',['Rel Time=',num2str(out_data.tau,2),' s'])       
     
     %finally I will get the right regimes for the overlay replotting
     %(matt) I think that over lay are when the two beads are touching
-    out_data.f_app_overlay=squeeze(out_data.f(1,1,1:out_data.appr_stop));
-    out_data.f_retr_overlay=squeeze(out_data.f(1,1,out_data.retr_start:end));
-    out_data.d_app_overlay=out_data.d(1:out_data.appr_stop)-out_data.d(pm);
-    out_data.d_retr_overlay=out_data.d(out_data.retr_start:end)-out_data.d(pm_r);
+    %out_data.f_app_overlay=squeeze(out_data.f(1,1,1:out_data.appr_stop));
+    %out_data.f_retr_overlay=squeeze(out_data.f(1,1,out_data.retr_start:end));
+    %out_data.d_app_overlay=out_data.d(1:out_data.appr_stop)-out_data.d(pm);
+    %out_data.d_retr_overlay=out_data.d(out_data.retr_start:end)-out_data.d(pm_r);
 
     
     %finally we put it all in the handles structure to be saved later if
