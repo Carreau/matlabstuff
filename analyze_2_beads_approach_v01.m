@@ -181,16 +181,21 @@ function handles=preprocess_data(handles)
     % due to control bit we need to remove 1 point from time to time
     % let's find the middle value and find on which side ther is the
     % most points
-    %clear rd milieu want s;
-    %rd = rdata.Data.MeasuredData(4).Data;
-    %milieu  = (min(rd)+max(rd))/2;
-    %want = rd < milieu;
-    %s= sum(want);
-    %if(s < length(rd)/10)
-    %   want=not(want);
-    %end
-    %clear s milieu;
-    %fprintf('in the filtered data, %d datapoints have been removed', sum(not(want)) );
+    clear rd milieu want s;
+    rd = rdata.Data.MeasuredData(4).Data;
+    milieu  = (min(rd)+max(rd))/2;
+    want = rd < milieu;
+    s= sum(want);
+    if(s < length(rd)/10)
+       want=not(want);
+    end
+    clear s milieu;
+    fprintf('in the filtered data, %d datapoints have been removed', sum(not(want)) );
+    length(rdata.Data.MeasuredData(1).Data);
+    for i=1:length(rdata.Data.MeasuredData)
+        rdata.Data.MeasuredData(i).Data =  rdata.Data.MeasuredData(i).Data(want) ;
+    end
+    length(rdata.Data.MeasuredData(1).Data);
     
     %% try to change the rdata structure to remove unwanted columns
     %rd2=rdata
@@ -444,7 +449,6 @@ function handles=preprocess_data(handles)
     out_data.appr_stop=trp_d_0_cut(1);
     moving_trap.linbinvalue = bin_length;
     still_trap.linbinvalue = bin_length;
-    disp('testing assert');
     
     %% for now, let be sure the values are still the same ! 
     assert( (moving_trap.event_lb.appr.start == out_data.appr_start) );
