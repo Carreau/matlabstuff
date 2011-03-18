@@ -9,6 +9,8 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         fTouchDetection
         fitvalue
         commentaire
+        arp
+        cp
     end
     %properties that are recalculed when accessed (ie depend on rawdata)
     properties(Dependent)
@@ -46,6 +48,16 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
     % ?
     % f0
     methods
+        function setCp(self,value)
+            for i = 1:length(self)
+                self(i).cp = value;
+            end
+        end
+        function setArp(self,value)
+            for i = 1:length(self)
+                self(i).arp = value;
+            end
+        end
         function setCommentaire(self,str)
             for i = 1:length(self)
                self(i).commentaire=str;
