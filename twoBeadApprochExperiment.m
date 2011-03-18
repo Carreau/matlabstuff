@@ -36,19 +36,19 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         touch_d
         param
     end
-    %% calcul du module d'young 
+    %% calcul du module d'young
     % %F=4/3*E/(1-(nu)^2).*d.^(3/2)*sqrt(r)+f0;
-    % avec 
+    % avec
     % F force sur la bille
     % E module d'young
-    % nu coefficient de poisson 
+    % nu coefficient de poisson
     % d ?
     % ?
     % f0
     methods
         function setCommentaire(self,str)
             for i = 1:length(self)
-               self(i).commentaire=str; 
+               self(i).commentaire=str;
             end
         end
         function ret = description(self)
@@ -63,16 +63,16 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
 
                 A2 = s.rawdata.datevec(1:5);
                 format = strcat(format,'%04i-%02i-%02i %02i:%02i\t');
-    
+
                 A3 = s.approachAngleDeg;
                 format = strcat(format,'%4.0f\t');
 
                 A4 = s.param.speed.value;
                 format = strcat(format,'%3i\t');
-     
+
                 A5 = s.param.resting_time.value;
                 format = strcat(format,'%3i\t');
-    
+
                 ret = [ret;sprintf(format,A,A2,A3,A4,A5)];
              end
         end
@@ -91,11 +91,11 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
                 self(i).fitvalue.err = err*1E20;
                 self(i).fitvalue.drift = drift;
            end
-           
+
         end
-        
+
         %lazy accessor
-        function p = get.param(self)        
+        function p = get.param(self)
             p = self.rawdata.parameters;
         end
         function distance = get.touch_d(self)
@@ -112,25 +112,25 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         %   d = sqrt((self.moving_trap.x(point)+ self.still_trap.x(point)).^2 + (self.moving_trap.y(point)-self.still_trap.y(point)).^2);
         %end
         function d = get.trap_distance(self)
-           %disp('this is the trap distance in aod units'); 
+           %disp('this is the trap distance in aod units');
            %d = sqrt((self.moving_trap.x+ self.still_trap.x).^2 +
-           %(self.moving_trap.y-self.still_trap.y).^2); 
+           %(self.moving_trap.y-self.still_trap.y).^2);
            d= self.rawdata.d;
         end
-        
+
         function d= get.bead_distance(self)
            mb = self.moving_trap.absolute_bead_pos;
            sb = self.still_trap.absolute_bead_pos;
            dx = sb.x-mb.x;
            dy = sb.y-mb.y;
-           d = sqrt( dx .^2 + dy .^2); 
+           d = sqrt( dx .^2 + dy .^2);
         end
         %lazy accesor
         function x = applyfun(self,fun)
             for i=1:length(self)
                 x(i) = fun(self(i));
             end
-            
+
         end;
         function f = get.moving_trap_force(self)
             f.x=squeeze(self.rawdata.f(2,1,:));
@@ -157,12 +157,12 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         function theta=get.approachAngleDeg(self)
             theta=rad2deg(self.approachAngle);
         end
-        
+
         %lazy accesor (convenient)
         function theta=get.approachAngleRad(self)
             theta=self.approachAngle;
         end
-        
+
         %lazy accesor
         function theta=get.approachAngle(self)
             dx = self.moving_trap.pos_um.x(1)-self.still_trap.pos_um.x(1);
