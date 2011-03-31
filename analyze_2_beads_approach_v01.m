@@ -558,7 +558,7 @@ function update_figures(hObject,handles)
     
     
     
-    axes(handles.plot_fd)
+    axes(handles.plot_fd);
     sel1=round(pos(1,1)/2*(handles.parameters.Effective_Sampling_Rate.value))+1;
     sel2=round(pos(2,1)/2*(handles.parameters.Effective_Sampling_Rate.value));
     d_sel=handles.d(sel1:sel2);
@@ -568,7 +568,7 @@ function update_figures(hObject,handles)
     xlabel('Distance between beads [�m]')
     ylabel('Force in N')
     
-    axes(handles.plot_ft)
+    axes(handles.plot_ft);
     ha=gca;
     %the position of the actual selector lines
     plot([0:length(squeeze(handles.f(1,1,:)))-1]*2/(handles.parameters.Effective_Sampling_Rate.value),squeeze(handles.f(1,1,:)));
@@ -585,7 +585,7 @@ function update_figures(hObject,handles)
     end
     
     axes(handles.plot_ft_sel)
-    ha=gca;
+    %ha=gca;
     %the position of the actual selector lines
     plot([0:length(d_sel)-1]*2/(handles.parameters.Effective_Sampling_Rate.value),f_sel);
     title('Force Evolution Plot')

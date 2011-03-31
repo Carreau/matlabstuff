@@ -15,11 +15,11 @@ function [d0,f0,E,err,Drift] = youngfit(d,yorig)
     %Starting = fminsearch(@youngerr,Starting,[],d0,yorig0);
     Estimates=fminsearch(@youngerr,Starting,[],d,yorig);
     %Estimates = Starting;
-    d0 = Estimates(1)
-    f0 = Estimates(2)
-    E  = Estimates(3)
-    Drift = Estimates(4)
-    err=youngerr(Estimates,d,yorig)
+    d0 = Estimates(1);
+    f0 = Estimates(2);
+    E  = Estimates(3);
+    Drift = Estimates(4);
+    err=youngerr(Estimates,d,yorig);
     
     figure(1)
     hold off;

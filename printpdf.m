@@ -1,4 +1,5 @@
 function printpdf(i,filename)
+    % use : printpdf(figurenumber, filename')
     figure(i)
     set(gcf,'paperunits','centimeters')
     set(gcf,'papersize',[29.7,21]) % Desired outer dimensions

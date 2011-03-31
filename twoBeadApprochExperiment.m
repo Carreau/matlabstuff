@@ -60,7 +60,7 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
             end
         end
         function ret = description(self)
-            ret=[];fprintf('filename\tyyyy-mm-dd hh:mm\tangl\tspeed\trest_time\ttime_m\n');
+            ret=[];fprintf('filename\tyyyy-mm-dd hh:mm\tangl\tspeed\tr_time\ttime_m\n');
              for i=1:length(self)
                 s=self(i);
                 format = '';
@@ -81,8 +81,8 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
                 A5 = s.param.resting_time.value;
                 format = strcat(format,'%3i\t');
     
-                A6 = s.time_m;
-                format = strcat(format,'%3i\t');
+                A6 = floor(s.time_m*10)/10;
+                format = strcat(format,'%04.1f\t');
                 
                 ret = [ret;sprintf(format,A,A2,A3,A4,A5,A6)];
              end
