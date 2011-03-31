@@ -186,16 +186,16 @@ for fnum=1:numel(infilename)
 	FileFolder=pathstr;
 	
 	if fnum==1
-		fprintf('\n\n')
+		%fprintf('\n\n')
 	end
-	fprintf('Converting ''%s''...',FileNameShort)
+	%fprintf('Converting ''%s''...',FileNameShort)
 	
 	fid=fopen(FileNameLong);
 	
 	if fid==-1
 		e=errordlg(sprintf('Could not open ''%s''.',FileNameLong),'File Cannot Be Opened');
 		uiwait(e)
-		fprintf('\n\n')
+		%fprintf('\n\n')
 		return
 	end
 	
@@ -334,7 +334,7 @@ for fnum=1:numel(infilename)
 							'Cannot Create Valid Field Name');
 						uiwait(e)
 						fclose(fid);
-						fprintf('\n\n')
+						%fprintf('\n\n')
 						return
 					end
 					
@@ -370,15 +370,15 @@ for fnum=1:numel(infilename)
 									obname),'Cannot Create Valid Field Name');
 								uiwait(e)
 								fclose(fid);
-								fprintf('\n\n')
+								%fprintf('\n\n')
 								return
 							end
 							
 							if all(~strcmpi({index.name},NewName))
 								HaveValidName=true;
 								if TruncFieldName
-									fprintf('\n\n\tField name ''%s'' is too long and\n\t\thas been truncated to ''%s''.\n',...
-										obname,NewName)
+									%fprintf('\n\n\tField name ''%s'' is too long and\n\t\thas been truncated to ''%s''.\n',...
+									%	obname,NewName)
 								else
 									fprintf('\n\n\tField name ''%s'' already exits so\n\t\tit has been changed to ''%s''.\n',...
 										obname,NewName)
@@ -678,13 +678,13 @@ for fnum=1:numel(infilename)
 		MATFileNameLong=fullfile(FileFolder,MATFileNameShort);
 		try
 			save(MATFileNameLong,'ConvertedData','Index','ConvertVer')
-			fprintf('\n\nConversion complete (saved in ''%s'').\n\n',MATFileNameShort)
+			%fprintf('\bConversion complete (saved in ''%s'').\n\n',MATFileNameShort)
 		catch exception
 			fprintf('\n\nConversion complete (could not save ''%s'').\n\t%s: %s\n\n',MATFileNameShort,exception.identifier,...
 				exception.message)
 		end
 	else
-		fprintf('\n\nConversion complete.\n\n')
+		%fprintf('\rConversion complete.')
 	end
 	
 end	%'end' for the 'Number of Files' loop

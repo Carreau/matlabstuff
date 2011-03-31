@@ -21,8 +21,7 @@ function varargout = analyze_2_beads_approach_v01(varargin)
     % See also: GUIDE, GUIDATA, GUIHANDLES
     
     %% on affiche si c'est un version de test
-    disp('warning this is still a testing version, it saves data with reomved datapoints');
-    disp('warning this is still a testing version, caracteristics of trap might be switched !');
+    %fprintf('warning this is still a testing version, it might saves data with reomved datapoints and trap caracteristics might me switched');
     %           raw order of data in tdms file :
     % force_and_distancedistance
     % force_and_distanceforce_moving_bead
@@ -181,6 +180,7 @@ function handles=preprocess_data(handles)
     % due to control bit we need to remove 1 point from time to time
     % let's find the middle value and find on which side ther is the
     % most points
+    
     clear rd milieu want s;
     rd = rdata.Data.MeasuredData(4).Data;
     milieu  = (min(rd)+max(rd))/2;
@@ -189,22 +189,30 @@ function handles=preprocess_data(handles)
     if(s < length(rd)/10)
        want=not(want);
     end
-    clear s milieu;
-    fprintf('in the filtered data, %d datapoints have been removed', sum(not(want)) );
-    length(rdata.Data.MeasuredData(1).Data);
-    for i=1:length(rdata.Data.MeasuredData)
-        rdata.Data.MeasuredData(i).Data =  rdata.Data.MeasuredData(i).Data(want) ;
+    filtrer = true;
+    s = sum(want);
+    if( s > length(rd)/10)
+       want = ones(size(want));
+       %disp('/!\ we keep all the data, the jumping bug seem not to be in this data group') 
+       filtrer = false;
     end
-    length(rdata.Data.MeasuredData(1).Data);
-    
+    clear s milieu;
+    if(filtrer)
+        fprintf('in the filtered data, %d datapoints have been removed', sum(not(want)) );
+        %length(rdata.Data.MeasuredData(1).Data);
+        for i=1:length(rdata.Data.MeasuredData)
+            rdata.Data.MeasuredData(i).Data =  rdata.Data.MeasuredData(i).Data(want) ;
+        end
+        %length(rdata.Data.MeasuredData(1).Data);
+    end
     %% try to change the rdata structure to remove unwanted columns
     %rd2=rdata
     %rd=rdata;
     %arrayfun(@(x) disp(length(x.Data)),rd2.Data.MeasuredData)
     %s = sum(not(want))
     %for i = 1:33
-   %     rdata.Data.MeasuredData(i).Data = rdata.Data.MeasuredData(i).Data(want);
-   %     rdata.Data.MeasuredData(i).Total_Samples = rdata.Data.MeasuredData(i).Total_Samples-sum(not(want));
+    %     rdata.Data.MeasuredData(i).Data = rdata.Data.MeasuredData(i).Data(want);
+    %     rdata.Data.MeasuredData(i).Total_Samples = rdata.Data.MeasuredData(i).Total_Samples-sum(not(want));
     %end
     %disp('apr�s filtrage');
     %arrayfun(@(x) length(x.Data),rd2.Data.MeasuredData)
@@ -393,11 +401,11 @@ function handles=preprocess_data(handles)
     matfilepath = [a_data.name(1:end-4),'mat'];
     tstamp = datevec(0);
     if(exist(matfilepath,'file'))
-        disp('corresponding .mat file exist, extract timestamp');
+        %fprintf(1,'corresponding .mat file exist, extract timestamp');
         f = load(matfilepath);
         tstamp = f.timestamp;
     else
-        disp('no corresponding .mat file, using epoch as timestamp');
+        %fprintf(1,'no corresponding .mat file, using epoch as timestamp');
     end
     out_data.datevec = tstamp;
     clear f tstamp matfilepath;

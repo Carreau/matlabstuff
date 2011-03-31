@@ -1,4 +1,12 @@
 classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
+    % class to handle two bead approch experiemtn 
+    % to create use temptest(f.save_data)
+    % the set date by calling self.setDatevec(YYYY,MM,DD,hh,mm,ss)
+    % and self.setCommentaire('String');
+    % do a self.fit
+    %
+    
+    
     %properties, ie actually store variables
     properties
         rawdata
@@ -52,7 +60,7 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
             end
         end
         function ret = description(self)
-            ret=[];fprintf('filename\tyyyy-mm-dd hh:mm\tangl\tspeed\trest_time\n');
+            ret=[];fprintf('filename\tyyyy-mm-dd hh:mm\tangl\tspeed\trest_time\ttime_m\n');
              for i=1:length(self)
                 s=self(i);
                 format = '';
@@ -73,7 +81,10 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
                 A5 = s.param.resting_time.value;
                 format = strcat(format,'%3i\t');
     
-                ret = [ret;sprintf(format,A,A2,A3,A4,A5)];
+                A6 = s.time_m;
+                format = strcat(format,'%3i\t');
+                
+                ret = [ret;sprintf(format,A,A2,A3,A4,A5,A6)];
              end
         end
         function fit(self)
