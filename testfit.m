@@ -22,7 +22,7 @@ function r = testfit()
         t.fg=F;
         t.eg=E;
         t.errg=err;
-        t.drift=drift;
+        t.driftg=drift;
         r=[r,t];
         fprintf('\b\b\b\b\b\b\b\b\b');
         fprintf('%04d/%3d',i,nmax);
