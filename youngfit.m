@@ -10,8 +10,8 @@ function [d0,f0,E,err,Drift] = youngfit(d,yorig)
     yorig=yorig(100:end);
     l=length(d);
     n=50;
-    d0      = d(1:floor(l/n):end);
-    yorig0  = yorig(1:floor(l/n):end);
+    %d0      = d(1:floor(l/n):end);
+    %yorig0  = yorig(1:floor(l/n):end);
     %Starting = fminsearch(@youngerr,Starting,[],d0,yorig0);
     Estimates=fminsearch(@youngerr,Starting,[],d,yorig);
     %Estimates = Starting;
@@ -21,12 +21,12 @@ function [d0,f0,E,err,Drift] = youngfit(d,yorig)
     Drift = Estimates(4);
     err=youngerr(Estimates,d,yorig);
     
-    figure(1)
-    hold off;
-    plot(d,yorig,'x');
-    hold on;
-    plot(d,younghertz(d,d0,f0,E,Drift),'r*');
-    hold off;
+    %figure(1)
+    %hold off;
+    %plot(d,yorig,'x');
+    %hold on;
+    %plot(d,younghertz(d,d0,f0,E,Drift),'r*');
+    %hold off;
 end
      
 

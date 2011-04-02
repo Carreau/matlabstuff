@@ -1,5 +1,7 @@
 function ret = younghertz(x,d0,f0,E,Drift)
-     %% calcul du module d'young 
+    %% calcul du module d'young 
+    % Usage : 
+    % younghertz(x,d0,f0,E,Drift)
     % F=4/3*E/(1-(nu)^2).*d.^(3/2)*sqrt(r)+f0;
     % avec 
     % F force sur la bille
