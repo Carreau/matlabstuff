@@ -25,18 +25,28 @@ function r = testfit()
         t.driftg=drift;
         r=[r,t];
         fprintf('\b\b\b\b\b\b\b\b\b');
-        fprintf('%04d/%3d',i,nmax);
+        fprintf('%04d/%04d',i,nmax);
         %figure(1);
         hold on 
         %plot(d,yorig,'x');
         %plot(d,younghertz(d,D,F,E,drift),'r*');
         hold on
     end
-    figure(2);
-    plot([r.er],[r.eg],'+');
-    title('young modulus');
+    %figure(2);
+    %clf
+    %plot([r.er],[r.eg],'+');
+    %title('young modulus');
     
-    figure(3);
-    plot([r.dr],[r.dg],'+');
-    title('touch distance');
+    %figure(3);
+    %plot([r.dr],[r.dg],'+');
+    %title('touch distance');
+    
+    %figure(4);
+    %dd =[[r.dr]-[r.dg],[r.er]-[r.eg]];
+    %dd = reshape(dd,[length(dd)/2,2]);
+    %hist3(dd,[20,20]);
+    %set(get(gca,'child'),'FaceColor','interp','CDataMode','auto');
+    c = clock;
+    str = sprintf('stat_%i_%i-%i-%i_%ih%i.mat',nmax,c(1),c(2),c(3),c(4),c(5));
+    save(str,'r');
 end
