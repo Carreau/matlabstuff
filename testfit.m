@@ -4,15 +4,15 @@ function r = testfit()
     %Einit=3e-12;
     %f0init=0;
     %Drift = 0 ;
-    d=1:0.1:45;
+    d=1:0.02:45;
     r=[];
     fprintf('\niteration:       \n\n\r');
-    nmax=5000;
+    nmax=500;
     for i=1:nmax
         %%
         t.dr=normrnd(15,6);       %touch distance
-        t.fr=normrnd(3e-12,2E-12); 
-        t.er=normrnd(4e-12,3e-12); % young modulus
+        t.fr=normrnd(5e-12,2E-12); 
+        t.er=normrnd(6e-12,3e-12); % young modulus
         t.drift = normrnd(-3E-12,3E-12);
         yorig=younghertz(d,t.dr,t.fr,t.er,t.drift)+1*normrnd(0,20,size(d))*3e-12;
         %%
@@ -28,8 +28,8 @@ function r = testfit()
         fprintf('%04d/%04d',i,nmax);
         %figure(1);
         hold on 
-        %plot(d,yorig,'x');
-        %plot(d,younghertz(d,D,F,E,drift),'r*');
+        plot(d,yorig,'x');
+        plot(d,younghertz(d,D,F,E,drift),'r*');
         hold on
     end
     %figure(2);

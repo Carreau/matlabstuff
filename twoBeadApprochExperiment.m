@@ -45,6 +45,11 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         %touch distance
         touch_d
         param
+        %timo's young modulus
+        % we assume the touchdistance is ok, and then we inverse the hertz
+        % equation to get a young mudulus for each point
+        Etimo
+        
     end
     %% calcul du module d'young
     % %F=4/3*E/(1-(nu)^2).*d.^(3/2)*sqrt(r)+f0;
@@ -56,6 +61,32 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
     % ?
     % f0
     methods
+        %make the methode to guess E by timo's way
+        function ret = get.Etimo(self)
+            for i = 1:length(self)
+               if(size(self(i).fitvalue)== [0 0])
+                   disp('please fit the data first');
+                   return
+               end
+               % let's find be the force at the touch point
+               % then 
+               % d0
+               % f0
+               % drift
+               stop  = self(i).moving_trap.event.appr.stop;   
+               f_ind = (self(i).fitvalue.drift*self(i).fitvalue.d0+self(i).fitvalue.f0);
+               d00= self(i).fitvalue.d0*0.8;
+               [~,j] = min(abs(self(i).bead_distance(1:stop)-self(i).fitvalue.d0));
+               touchevent = j; 
+               re=@(f,d) (f-f_ind)*3/4*(1-0.5^2) ./ (sqrt(4.5) .* (d00-d).^3/2);
+               a=self(i).still_trap.force.r(touchevent:stop);
+               b= self(i).bead_distance(touchevent:stop);
+               ret = re(a,b);
+               hold on;
+               plot(b(1000:end)/d00,ret(1000:end),'r.');
+            end
+        end
+        %set the capting proteine concentration
         function setCp(self,value)
             for i = 1:length(self)
                 self(i).cp = value;

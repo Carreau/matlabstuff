@@ -21,12 +21,17 @@ function [d0,f0,E,err,Drift] = youngfit(d,yorig)
     Drift = Estimates(4);
     err=youngerr(Estimates,d,yorig);
     
-    %figure(1)
+    figure(1)
     %hold off;
-    %plot(d,yorig,'x');
-    %hold on;
-    %plot(d,younghertz(d,d0,f0,E,Drift),'r*');
+    plot(d,yorig,'+');
+    hold on;
+    plot(d,younghertz(d,d0,f0,E,Drift),'r*');
     %hold off;
+    xlabel('bead distance');
+    ylabel('force');
+    dv = clock();
+    str = sprintf('fig_%i_%i_%i-%i_%i_%i.pdf',dv(1),dv(2),dv(3),dv(4),dv(5),floor(dv(6)));
+    %printpdf(1,str);
 end
      
 
