@@ -35,9 +35,20 @@ classdef trap < handle
         pos_um              % same
         pos                 % not implemented should decide in which unity
         absolute_bead_pos   % in um (auto depend on kappa.x(.y)...)
+        auto_kappa          % for now, this will be a trap stiffness rescaled by the QPD power
     end
     
     methods
+        %let's do a kappa rescaled by QPD sum
+        function ret = get.auto_kappa(self)
+            % i'll use 30_mars_50cp_25apr.mat as reference
+            % is 
+            % for a qpd mean of 3.1136
+            % kappa.x will be  3.4466e-05
+            % kappa.y wil be 4.1101e-05
+            ret.x = mean(self.QPD_sum(1:1000))/3.1136*3.4466e-05;
+            ret.y = mean(self.QPD_sum(1:1000))/3.1136*4.1101e-05;
+        end
         %fonction to linbin 4parameters array with x,y,r et theta
         function ret = lbxyrt(self,data) %LinBin X Y R Theta
             ret.x = linbin(data.x,self.linbinvalue);
@@ -104,8 +115,8 @@ classdef trap < handle
         end
         function ret=get.force(self)
             %1E-6 car kappa doit être en pN/m ou N/mu m
-            ret.x = self.kappa.x/self.slopes.x*self.QPD_dx ./ self.QPD_sum * 1E-6;
-            ret.y = self.kappa.y/self.slopes.y*self.QPD_dy ./ self.QPD_sum * 1E-6;
+            ret.x = self.auto_kappa.x/self.slopes.x*self.QPD_dx ./ self.QPD_sum * 1E-6;
+            ret.y = self.auto_kappa.y/self.slopes.y*self.QPD_dy ./ self.QPD_sum * 1E-6;
             [ret.theta,ret.r] = cart2pol(ret.x,ret.y);
         end
     end

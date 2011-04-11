@@ -8,8 +8,9 @@ function [s]=temptest( str )
         s(i)=twoBeadApprochExperiment(f(i));
     end
     matfilepath = [str(1:end-4),'_meta.mat'];
+    var m;
     if(exist(matfilepath,'file'))
-        %fprintf(1,'corresponding .mat file exist, extract timestamp');
+        disp('found meta data, load them');
         m = load(matfilepath);
     else
         disp('merci d''entrer la date et l''heure de mélange de l''actine');

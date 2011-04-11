@@ -103,7 +103,7 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
             end
         end
         function ret = description(self)
-            ret=[];fprintf('filename\tyyyy-mm-dd hh:mm\tangl\tspeed\tr_time\ttime_m\n');
+            ret=[];fprintf('filename\tyyyy-mm-dd hh:mm\tangl\tspeed\tr_time\ttime_m\tkx/akx\tky/aky\n');
              for i=1:length(self)
                 s=self(i);
                 format = '';
@@ -126,8 +126,13 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
 
                 A6 = floor(s.time_m*10)/10;
                 format = strcat(format,'%04.1f\t');
+                
+                A8 = s.still_trap.kappa.x/s.still_trap.auto_kappa.x;
+                A7 = s.still_trap.kappa.y/s.still_trap.auto_kappa.y;
+                format = strcat(format,'%4.1f\t%4.1f\t');
+                
 
-                ret = [ret;sprintf(format,A,A2,A3,A4,A5,A6)];
+                ret = [ret;sprintf(format,A,A2,A3,A4,A5,A6,A7,A8)];
              end
         end
         function fit(self)
