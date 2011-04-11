@@ -1,23 +1,32 @@
-function [s]=temptest( f )
-    %tmp = load(str);
-    %f  = tmp.save_data; 
-    disp('********');
-    disp('merci de donner le date et l''heure, ainsi qu''une description');
-    disp('********');
+function [s]=temptest( str )
+    tmp = load(str);
+    f  = tmp.save_data; 
+    %disp('********');
+    %disp('merci de donner le date et l''heure, ainsi qu''une description');
+    %disp('********');
     for i=1:length(f)
         s(i)=twoBeadApprochExperiment(f(i));
     end
-    disp('merci d''entrer la date et l''heure de mélange de l''actine');
-    annee = input('annee : ');
-    mois = input('mois : ');
-    jour = input('jour : ');
-    heures = input('heures : ');
-    minutes = input('minutes : ');
-    secondes = input('secondes : ');
-    s.setDatevec(annee,mois,jour,heures,minutes,secondes);
-    disp('veuillez entrer un concentration en Arp et cp');
-    arp = input('arp : ');
-    cp = input('cp : ');
-    s.setArp(arp);
-    s.setCp(cp);
+    matfilepath = [str(1:end-4),'_meta.mat'];
+    if(exist(matfilepath,'file'))
+        %fprintf(1,'corresponding .mat file exist, extract timestamp');
+        m = load(matfilepath);
+    else
+        disp('merci d''entrer la date et l''heure de mélange de l''actine');
+        m.annee = input('annee : ');
+        m.mois = input('mois : ');
+        m.jour = input('jour : ');
+        m.heures = input('heures : ');
+        m.minutes = input('minutes : ');
+        m.secondes = input('secondes : ');
+        disp('veuillez entrer un concentration en Arp et cp');
+        m.arp = input('arp : ');
+        m.cp = input('cp : ');
+        save(matfilepath,'-struct','m');
+    end
+    
+    s.setDatevec(m.annee,m.mois,m.jour,m.heures,m.minutes,m.secondes);
+    
+    s.setArp(m.arp);
+    s.setCp(m.cp);
 end
