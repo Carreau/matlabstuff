@@ -1,5 +1,6 @@
 function [d0,f0,E,err,Drift] = youngfit(d,yorig)
     %%
+    %disp('doing youngfit, with drift and so');
     dinit=8;
     Einit=3e-12;
     f0init=0;

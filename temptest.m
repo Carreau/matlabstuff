@@ -1,6 +1,7 @@
 function [s]=temptest( str )
     tmp = load(str);
-    f  = tmp.save_data; 
+    f  = tmp.save_data;
+    disp('cocuou');
     %disp('********');
     %disp('merci de donner le date et l''heure, ainsi qu''une description');
     %disp('********');

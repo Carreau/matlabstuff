@@ -115,8 +115,8 @@ classdef trap < handle
         end
         function ret=get.force(self)
             %1E-6 car kappa doit être en pN/m ou N/mu m
-            ret.x = self.auto_kappa.x/self.slopes.x*self.QPD_dx ./ self.QPD_sum * 1E-6;
-            ret.y = self.auto_kappa.y/self.slopes.y*self.QPD_dy ./ self.QPD_sum * 1E-6;
+            ret.x = self.kappa.x/self.slopes.x*self.QPD_dx ./ self.QPD_sum * 1E-6;
+            ret.y = self.kappa.y/self.slopes.y*self.QPD_dy ./ self.QPD_sum * 1E-6;
             [ret.theta,ret.r] = cart2pol(ret.x,ret.y);
         end
     end

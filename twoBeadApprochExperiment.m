@@ -19,6 +19,10 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         commentaire
         arp
         cp
+        % this will store the result for partial fit on a 
+        % sliding two make an educated guess of the young modulus 
+        % and the touch distance over the contact of the two bead
+        partialfit
     end
     %properties that are recalculed when accessed (ie depend on rawdata)
     properties(Dependent)
@@ -50,6 +54,7 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         % equation to get a young mudulus for each point
         Etimo
         
+        
     end
     %% calcul du module d'young
     % %F=4/3*E/(1-(nu)^2).*d.^(3/2)*sqrt(r)+f0;
@@ -66,6 +71,7 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
             for i = 1:length(self)
                if(size(self(i).fitvalue)== [0 0])
                    disp('please fit the data first');
+                   ret = Nan;
                    return
                end
                % let's find be the force at the touch point
@@ -75,8 +81,8 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
                % drift
                stop  = self(i).moving_trap.event.appr.stop;   
                f_ind = (self(i).fitvalue.drift*self(i).fitvalue.d0+self(i).fitvalue.f0);
-               d00= self(i).fitvalue.d0*0.8;
-               [~,j] = min(abs(self(i).bead_distance(1:stop)-self(i).fitvalue.d0));
+               d00= self(i).fitvalue.d0*1.0;
+               [~,j] = min(abs(self(i).bead_distance(1:stop)-d00));
                touchevent = j; 
                re=@(f,d) (f-f_ind)*3/4*(1-0.5^2) ./ (sqrt(4.5) .* (d00-d).^3/2);
                a=self(i).still_trap.force.r(touchevent:stop);
@@ -84,6 +90,7 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
                ret = re(a,b);
                hold on;
                plot(b(1000:end)/d00,ret(1000:end),'r.');
+               errorbar(4.5/d00,0,1e-12,'r');
             end
         end
         %set the capting proteine concentration
@@ -134,6 +141,39 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
 
                 ret = [ret;sprintf(format,A,A2,A3,A4,A5,A6,A7,A8)];
              end
+        end
+        function doPartialFit(self)
+            for i=1:length(self)
+                clf
+                s= self(i);
+                s.partialfit=[];
+                f = self(i).still_trap.force.r(1:self(i).moving_trap.event.appr.stop);
+                d = self(i).bead_distance     (1:self(i).moving_trap.event.appr.stop);
+                n = length(f);
+                fprintf(1,'we hav %d value to fit\n',length(f));
+                step = 2000;
+                sb = 200;
+                a = floor(step/sb);
+                n = floor(n/step);
+                dinit=30;
+                Einit=1e-15;
+                f0init=0;
+                Starting = [dinit,Einit];
+                for j=1:(n-1)*a
+                    intv = (1+(j-1)*sb:1+(j-1)*sb+step);
+                    [d0,E,err,flag] = yf(d(intv),f(intv),Starting);
+                    if(flag)
+                        
+                        Starting = [d0,E];
+                        s.partialfit.d0(j)    = d0;
+                        s.partialfit.E(j)     = E*1e12;
+                        s.partialfit.err(j)   = err*1E20;
+                        s.partialfit.d(j) = mean(d(intv));
+                    else 
+                        disp('max reach /////////');
+                    end
+                end
+            end
         end
         function fit(self)
            for i=1:length(self)
