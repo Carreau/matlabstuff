@@ -1,12 +1,69 @@
 classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
-    % class to handle two bead approch experiemtn 
-    % to create use temptest(f.save_data)
-    % the set date by calling self.setDatevec(YYYY,MM,DD,hh,mm,ss)
-    % and self.setCommentaire('String');
-    % do a self.fit
+    % Class to handle two bead approch experiement
     %
-    
-    
+    % CREATING OBJECT
+    %      to create use
+    %
+    %      >> exp = temptest('experimentfile.mat')
+    %
+    %      if a file named 'experimentfile_meta.mat' il will also be loaded to
+    %      add information about actin melange time, concentration of caping
+    %      protein, arp...usw
+    %
+    %      if the _meta file does not exist il will be created after you enter
+    %      the information
+    %
+    % STATIC DATA STRUCTURE
+    %      rawdata
+    %      still_trap  -> structure to acces info about the still trap
+    %      movong_trap -> structure to acces info about the movong trap
+    %            cf trap.m
+    %      datevec_beggining -> datevec of actin mix, use to caculate time_m
+    %      fTouchDetection -> not Used anymore, keep for compatibility
+    %      fitvalue        -> store the fitvalue after .fit is called
+    %      commentaire     -> misc caracter string
+    %      arp             ->concentration in arp
+    %      cp              -> concentrationin cp protein
+    %      partialfit      -> fit Values for a slindingFit after doPartialFit is
+    %                         called
+    % DYNAMIC DATA STRUCTURE
+    %      % those data type ara calculated each time you call them and are
+    %      % dependant on the values of the previous one
+    %
+    %      approachAngleDeg
+    %      approachAngleRad
+    %      approachAngle
+    %      moving_trap_force -> almost same as still_trap.force but
+    %                           convenient acces to .tangent and .perp
+    %                           composantes
+	%      still_trap_force  -> same
+    %                   % note : x and y might be inverted and this one is line
+    %                   % bined
+    %
+    %      time_m            -> time in minute after value in datevec
+	%      trap_distance     -> distance between the two traps
+    %      bead_distance     -> distance between the two beads
+	%      E_final           -> not used
+	%      touch_d           -> not used
+    %      param             -> convenient acces to rawdata.parameters
+    %      Etimo             -> timo's way of findig E by averaging. need .fit
+    %                           before
+    %      % function %
+    %      doPartialFit      -> run an slinding fit
+    %      fit               -> fit the curve
+    %      description       -> plot a short array description of each exp.
+    %      applyfun          -> apply a anonypous function on each object
+    %                           usefull to get acces to subparameters
+    %                           eg
+    %      >> exp.applyfun(@(x) x.still_trap.force.x(1))
+    %            will give you an array of the fist value of the force on the
+    %            still_trap for each experiement
+    %      >> figure(2)
+    %      >> hold on
+    %      >> g.applyfun(@(x) plot(x.bead_distance,x.moving_trap.force.x,'+'));
+    %            will plot the force on the moving trap as a fonction of the
+    %            bead distance for all experiement.
+
     %properties, ie actually store variables
     properties
         rawdata
@@ -19,8 +76,8 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         commentaire
         arp
         cp
-        % this will store the result for partial fit on a 
-        % sliding two make an educated guess of the young modulus 
+        % this will store the result for partial fit on a
+        % sliding two make an educated guess of the young modulus
         % and the touch distance over the contact of the two bead
         partialfit
     end
@@ -53,8 +110,8 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         % we assume the touchdistance is ok, and then we inverse the hertz
         % equation to get a young mudulus for each point
         Etimo
-        
-        
+
+
     end
     %% calcul du module d'young
     % %F=4/3*E/(1-(nu)^2).*d.^(3/2)*sqrt(r)+f0;
@@ -75,15 +132,15 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
                    return
                end
                % let's find be the force at the touch point
-               % then 
+               % then
                % d0
                % f0
                % drift
-               stop  = self(i).moving_trap.event.appr.stop;   
+               stop  = self(i).moving_trap.event.appr.stop;
                f_ind = (self(i).fitvalue.drift*self(i).fitvalue.d0+self(i).fitvalue.f0);
                d00= self(i).fitvalue.d0*1.0;
                [~,j] = min(abs(self(i).bead_distance(1:stop)-d00));
-               touchevent = j; 
+               touchevent = j;
                re=@(f,d) (f-f_ind)*3/4*(1-0.5^2) ./ (sqrt(4.5) .* (d00-d).^3/2);
                a=self(i).still_trap.force.r(touchevent:stop);
                b= self(i).bead_distance(touchevent:stop);
@@ -133,11 +190,11 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
 
                 A6 = floor(s.time_m*10)/10;
                 format = strcat(format,'%04.1f\t');
-                
+
                 A8 = s.still_trap.kappa.x/s.still_trap.auto_kappa.x;
                 A7 = s.still_trap.kappa.y/s.still_trap.auto_kappa.y;
                 format = strcat(format,'%4.1f\t%4.1f\t');
-                
+
 
                 ret = [ret;sprintf(format,A,A2,A3,A4,A5,A6,A7,A8)];
              end
@@ -163,13 +220,13 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
                     intv = (1+(j-1)*sb:1+(j-1)*sb+step);
                     [d0,E,err,flag] = yf(d(intv),f(intv),Starting);
                     if(flag)
-                        
+
                         Starting = [d0,E];
                         s.partialfit.d0(j)    = d0;
                         s.partialfit.E(j)     = E*1e12;
                         s.partialfit.err(j)   = err*1E20;
                         s.partialfit.d(j) = mean(d(intv));
-                    else 
+                    else
                         disp('max reach /////////');
                     end
                 end
