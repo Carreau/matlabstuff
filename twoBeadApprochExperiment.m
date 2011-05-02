@@ -294,7 +294,6 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
                 %   1           -   
                 %    t_t=[0:length(d_t)-1]*1/self(i).rawdata.parameters.Effective_Sampling_Rate.value;
                 t_t=[0:length(d_t)-1]*1/self(i).rawdata.parameters.Sampling_rate.value;%average per trap ?    
-                length(d_t)
                 start_point = [(d_t(1)-d_t(end)),d_t(end),t_t(end)/40];
                 %options=optimset('iter');
                 
