@@ -67,6 +67,7 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
     %properties, ie actually store variables
     properties
         rawdata
+        index
         %traps position
         still_trap
         moving_trap
@@ -80,6 +81,7 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         % sliding two make an educated guess of the young modulus
         % and the touch distance over the contact of the two bead
         partialfit
+        metafile
     end
     %properties that are recalculed when accessed (ie depend on rawdata)
     properties(Dependent)
@@ -123,7 +125,39 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
     % ?
     % f0
     methods
-        %make the methode to guess E by timo's way
+        
+        function showfitTau(self)
+           for i = 1:length(self)
+                e = self(i).moving_trap.event.appr.stop;
+                ee = self(i).moving_trap.event.retr_start;
+                d =[0:ee-e]*1/self(i).rawdata.parameters.Sampling_rate.value;
+                f = [self(i).still_trap.force.r];
+                a = self(i).fitvalue.estimates.a;
+                b = self(i).fitvalue.estimates.b;
+                tau = self(i).fitvalue.estimates.tau;
+                fh = @(x)a*exp(-x./tau)+b;
+                figure(2);
+                hold off
+                plot(d,f(e:ee),'+');
+                hold on
+                plot(d,fh(d),'r+');
+           end
+        end
+        
+        function showfitYoung(self)
+           for i = 1:length(self)
+                e = self(i).moving_trap.event.appr.stop
+                d = [self(i).bead_distance];
+                f = [self(i).still_trap.force.r];
+                fh = @(x) youngHertz(x,self(i).fitvalue.d0,self(i).fitvalue.f0,self(i).fitvalue.E*1e-12,self(i).fitvalue.drift);
+                figure(1);
+                hold off
+                plot(d(1:e),f(1:e),'+');
+                hold on
+                plot(d(1:e),fh(d(1:e)),'r-');
+           end
+        end
+        %% make the methode to guess E by timo's way
         function ret = get.Etimo(self)
             for i = 1:length(self)
                if(size(self(i).fitvalue)== [0 0])
@@ -259,23 +293,30 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
                 
                 %   1           -   
                 %    t_t=[0:length(d_t)-1]*1/self(i).rawdata.parameters.Effective_Sampling_Rate.value;
-                t_t=[0:length(d_t)-1]*1/self(i).rawdata.parameters.Sampling_rate.value;   
-                start_point = [d_t(1)-d_t(end),d_t(end),t_t(end)];
+                t_t=[0:length(d_t)-1]*1/self(i).rawdata.parameters.Sampling_rate.value;%average per trap ?    
+                length(d_t)
+                start_point = [(d_t(1)-d_t(end)),d_t(end),t_t(end)/40];
                 %options=optimset('iter');
                 
-                a = fminsearch(@exp_dec, start_point,[],t_t,d_t);
+                [a,err] = fminsearch(@exp_dec, start_point,[],t_t,d_t);
+                figure(3);
                 hold off;
                 plot(t_t,d_t,'+');
                 hold on;
                 aa= @(x) a(1)*exp(-x./a(3))+a(2);
                 bb =@(x) arrayfun(aa,x);
                 plot(t_t,bb(t_t),'r','LineWidth',2);
-                
+                self(i).showfitTau;
                 self(i).fitvalue.estimates.a = a(1);
                 self(i).fitvalue.estimates.b = a(2);
                 self(i).fitvalue.estimates.tau = a(3);
+                self(i).fitvalue.estimates.err = err;
                 fprintf('fit %d/%d\n',i,length(self));
-                
+                f= load(self(i).metafile);
+                f.submeta(self(i).index).fitvalue= self(i).fitvalue;
+                %disp 'save in' self(i).metafile;
+                save(self(i).metafile,'-struct','f');
+                clear f;
            end
 
         end
@@ -373,7 +414,9 @@ function [sse, FittedCurve] =exp_dec(params,t,f)
         b = params(2);
         tau= params(3);
         FittedCurve=a*exp(-t./tau)+b;
-        ErrorVector = (FittedCurve - f)./f;
+        ErrorVector = (FittedCurve - f)./(f);
+        %ErrorVector = (FittedCurve - f).*(FittedCurve-b);
+        %ErrorVector = (FittedCurve - f)./(FittedCurve);
         ErrorVector(isnan(ErrorVector))=[];
         sse = abs(sum(abs(ErrorVector) .^ 2))*1e10;
 end
