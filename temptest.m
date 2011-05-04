@@ -33,7 +33,9 @@ function [s]=temptest( str )
     for i=1:length(s);
         s(i).metafile=matfilepath;
         s(i).index=i;
-        s(i).fitvalue=m.submeta(i).fitvalue;
+        if isfield(m,'submeta')
+            s(i).fitvalue=m.submeta(i).fitvalue;
+        end
     end
    
 %   s.datafile=[str];

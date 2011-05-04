@@ -305,7 +305,6 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
                 aa= @(x) a(1)*exp(-x./a(3))+a(2);
                 bb =@(x) arrayfun(aa,x);
                 plot(t_t,bb(t_t),'r','LineWidth',2);
-                self(i).showfitTau;
                 self(i).fitvalue.estimates.a = a(1);
                 self(i).fitvalue.estimates.b = a(2);
                 self(i).fitvalue.estimates.tau = a(3);
@@ -316,6 +315,7 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
                 %disp 'save in' self(i).metafile;
                 save(self(i).metafile,'-struct','f');
                 clear f;
+                self(i).showfitTau;
            end
 
         end
