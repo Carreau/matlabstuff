@@ -137,7 +137,8 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
                 tau = self(i).fitvalue.estimates.tau;
                 fh = @(x)a*exp(-x./tau)+b;
                 figure(2);
-                hold off
+                clf;
+                hold on
                 plot(d,f(e:ee),'+');
                 hold on
                 plot(d,fh(d),'r+');

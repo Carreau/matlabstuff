@@ -25,16 +25,19 @@ summoyx=[];
 sumstdx=[];
 summoyy=[];
 sumstdy=[];
-err=[]
-
+err=[];
+nn=[];
 
 
 for i=1:length(g)
     figure(1);
+    
     mtx=[g(i).moving_trap.bead_pos_in_trap.x];
     stx=[g(i).still_trap.bead_pos_in_trap.x];
     d=g(i).moving_trap.event.appr.stop;
     f=g(i).moving_trap.event.retr_start;
+    n=floor(sqrt(f-d));
+    nn= [nn n];
     plot(stx(d:f)+mtx(d:f),'g');
     hold on;
     plot(stx(d:f),'k.');
@@ -62,17 +65,17 @@ for i=1:length(g)
     
     figure(3)
     
-    [a,b]=hist(sty(d:f)-mean(sty(d:f)),50);
-    plot(b,a,'ro--');
+    [a,b]=hist(sty(d:f)-mean(sty(d:f)),n);
+    plot(b,a,'r.');
     hold on
-    [a,b]=hist(mty(d:f)-mean(mty(d:f)),50);
-    plot(b,a,'bo--');
-    [a,b]=hist(sty(d:f)+mty(d:f)-mean(sty(d:f)+mty(d:f)),50);
+    [a,b]=hist(mty(d:f)-mean(mty(d:f)),n);
+    plot(b,a,'b.');
+    [a,b]=hist(sty(d:f)+mty(d:f)-mean(sty(d:f)+mty(d:f)),n);
     [mu,sig,ermu,ersig] = normfit(sty(d:f)+mty(d:f)-mean(sty(d:f)+mty(d:f)));
 
     plot(b,a,'g*--');
     fu= @(x)normpdf(x,mu,sig)*max(a)/normpdf(0,0,sig);
-    plot(b,fu(b),'g--');
+    plot(b,fu(b),'k--','LineWidth',1.2);
     err= [err sum((a-fu(b)).^2)/length(mty(d:f))];
     
     hold off;
@@ -92,6 +95,56 @@ for i=1:length(g)
 
     hold off;
 
-    %input('next...');
+    input('next...');
 end
 x=[1:length(g)];
+
+
+
+
+%% %%
+cps =[g(garde==1).applyfun(@(x)x.cp)]; taus= [g(garde==1).applyfun(@(x)x.fitvalue.estimates.tau)];
+figure(4);
+want = (abs(taus) < 5);
+cps=cps(want);
+taus=taus(want);
+hold off;
+clf;
+%plot(cps,taus,'+');
+hold on ;
+eerrw=max(err(want))-err(want);
+%eerrw=1./err(want);
+
+for vcp=[0 10 30 50]
+    %select datapoint by cp
+    dp = taus(cps == vcp);
+    errw = eerrw(cps == vcp);
+    %errorbar(vcp+2,mean(dp),std(dp),'ro');
+    %
+    tmp_med=median(dp);
+    tmp_std=5*std(dp);
+    strip = (dp > tmp_med-tmp_std) & (dp < tmp_med+tmp_std );
+    sum(strip)/length(errw)
+    dp=dp(strip);
+    errw=errw(strip);
+    plot(vcp*ones(size(dp)),dp,'+');
+    %errorbar(vcp-1,tmp_med,tmp_std,'ro');
+    
+    errorbar(vcp+1,wmean(dp,errw),sqrt(var(dp,errw)),'ro');
+    axis([-1 55 -0.03 0.25]);
+end
+
+%%
+garde=[];
+for i=1:length(g)
+   err(i);
+   g(i).showfitTau;
+   inp=input('garder ? [y/N] ','s');
+   if(inp=='n')
+       garde=[garde 0];
+       disp('on garde pas');
+   else
+       garde=[garde 1];
+       disp('on garde');
+   end
+end
