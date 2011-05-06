@@ -12,19 +12,19 @@ g = [g temptest('run4_1-mars-2011_25arp-30cp.mat')];
 i=0;
 %% checkplot
 i=0;
-smoyx=[];
-mmoyx=[];
-secrx=[];
-mecrx=[];
-smoyy=[];
-mmoyy=[];
-secry=[];
-mecry=[];
+s.moy.x=[];
+m.moy.x=[];
+s.ecr.x=[];
+m.ecr.x=[];
+s.moy.y=[];
+m.moy.y=[];
+s.ecr.y=[];
+m.ecr.y=[];
 
-summoyx=[];
-sumstdx=[];
-summoyy=[];
-sumstdy=[];
+somme.moy.x=[];
+somme.std.x=[];
+somme.moy.y=[];
+somme.std.y=[];
 err=[];
 nn=[];
 
@@ -43,10 +43,10 @@ for i=1:length(g)
     plot(stx(d:f),'k.');
     plot(mtx(d:f),'r.');
     %axis([0 15e4 -10 10]);
-    smoyx=[smoyx mean(stx(d:f))];
-    mmoyx=[mmoyx mean(mtx(d:f))];
-    secrx=[secrx std(stx(d:f))];
-    mecrx=[mecrx std(mtx(d:f))];
+    s.moy.x=[s.moy.x mean(stx(d:f))];
+    m.moy.x=[m.moy.x mean(mtx(d:f))];
+    s.ecr.x=[s.ecr.x std(stx(d:f))];
+    m.ecr.x=[m.ecr.x std(mtx(d:f))];
 
 
     hold off;
@@ -80,22 +80,22 @@ for i=1:length(g)
     
     hold off;
     
-    smoyy=[smoyy mean(sty(d:f))];
-    mmoyy=[mmoyy mean(mty(d:f))];
-    secry=[secry std(sty(d:f))];
-    mecry=[mecry std(mty(d:f))];
+    s.moy.y=[s.moy.y mean(sty(d:f))];
+    m.moy.y=[m.moy.y mean(mty(d:f))];
+    s.ecr.y=[s.ecr.y std(sty(d:f))];
+    m.ecr.y=[m.ecr.y std(mty(d:f))];
     
-    summoyx=[summoyx mean(stx(d:f)+mtx(d:f))];
-    sumstdx=[sumstdx std(stx(d:f)+mtx(d:f))];
-    summoyy=[summoyy mean(sty(d:f)+mty(d:f))];
-    sumstdy=[sumstdy std(sty(d:f)+mty(d:f))];
+    somme.moy.x=[somme.moy.x mean(stx(d:f)+mtx(d:f))];
+    somme.std.x=[somme.std.x std(stx(d:f)+mtx(d:f))];
+    somme.moy.y=[somme.moy.y mean(sty(d:f)+mty(d:f))];
+    somme.std.y=[somme.std.y std(sty(d:f)+mty(d:f))];
 
 
     fprintf('\n%d over %d ',i,length(g));
 
     hold off;
 
-    input('next...');
+    %input('next...');
 end
 x=[1:length(g)];
 

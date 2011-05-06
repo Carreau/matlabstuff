@@ -1,90 +1,24 @@
 function varargout = AFM_viscoela_GUI(varargin)
-% Begin initialization code - DO NOT EDIT
-gui_Singleton = 1;
-gui_State = struct('gui_Name',       mfilename, ...
-                   'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @AFM_viscoela_GUI_OpeningFcn, ...
-                   'gui_OutputFcn',  @AFM_viscoela_GUI_OutputFcn, ...
-                   'gui_LayoutFcn',  [] , ...
-                   'gui_Callback',   []);
-if nargin && ischar(varargin{1})
-    gui_State.gui_Callback = str2func(varargin{1});
-end
-
-if nargout
-    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
-else
-    gui_mainfcn(gui_State, varargin{:});
-end
-% End initialization code - DO NOT EDIT
-
-%--------------------------------------------------------------------------
-% - START UP 
-function AFM_viscoela_GUI_OpeningFcn(hObject, eventdata, handles, varargin)
-global cell_mod_table
-global cell_visc_table
-global data_folder
-global g_hand
-
-% Read in static cell mod table
-cell_mod_table = dlmread('cellmod.tab','\t',1,0);
-cell_mod_table(:,2:3:end) = []; %I don't need these coloums
-cell_mod_table(:,15) = [];
-% Read in viscous cell mod table
-cell_visc_table = dlmread('vcellmod.tab','\t',3,0);
-
-data_folder = 'D:\afm';
-g_hand = handles;
-
-handles.output = hObject;
-guidata(hObject, handles);
-
-%--------------------------------------------------------------------------
-% - RETURN
-function varargout = AFM_viscoela_GUI_OutputFcn(hObject, eventdata, handles) 
-varargout{1} = handles.output;
-%--------------------------------------------------------------------------
-%--------------------------------------------------------------------------
-
-
-%--------------------------------------------------------------------------
-% - ANALYSE CURVE
-function b_analyse_Callback(hObject, eventdata, handles)
-global z_curve
-global z_curve_info
-global visco
-
-[k_tip, sensy, r_tip, ind_range, cp_thresh, visco] = read_GUI(handles);
-
-[z_curve, contact_point] = find_contact_point(z_curve, cp_thresh, visco);
-
-if ~isempty(get(handles.e_man_cp,'String'))
-    contact_point = str2double(get(handles.e_man_cp,'String'));
-    axes(handles.a_axes);
-    cla
-    hold on;
-    plot(z_curve(:,1),z_curve(:,2),'k')
-    plot(z_curve(contact_point,1),z_curve(contact_point,2),'xr','MarkerSize',12);
-    set(gca,'XLim',[z_curve(end,1),z_curve(1,1)]);
-    hold off;
-end
-
-substrate_height = get_substrate_height(z_curve_info(1),z_curve_info(2));
-
-[z_force_curve, z_indentation_curve, z_cell_thickness_curve, cell_height] =...
-    get_force_indentation_curve(z_curve, sensy, k_tip, contact_point, substrate_height);
-
-if ~isempty(get(handles.e_man_ch,'String'))
-    cell_height = str2double(get(handles.e_man_ch,'String'));
-    cell_height = cell_height / 1E9;
-end
-
+tbae=varargin{1};
+start=1;
+stop =tbae.moving_trap.event.appr.stop;
+%%
+z_force_curve=tbae.still_trap.force.r(start:stop);
+z_indentation_curve=tbae.fitvalue.d0-tbae.bead_distance(start:stop);
+z_curve = tbae.bead_distance;
+%%plot(z_indentation_curve,z_force_curve,'+');
+sensy=1;
+r_tip=4.5e-6;
+k_tip=(tbae.still_trap.kappa.x+tbae.still_trap.kappa.y)/2;
+cell_height = tbae.fitvalue.d0-4.5;
+contact_point=tbae.fitvalue.d0;
+visco=0;
 
 model_curves = apply_models(z_curve, z_force_curve, z_indentation_curve, sensy, r_tip, k_tip, cell_height, contact_point, visco);
 
-
+ind_range = [-10 10];
 [k_means,k_errors,av_range] = calc_k(model_curves, contact_point, ind_range);
-display_model_curves(handles, model_curves, k_means, k_errors, contact_point, cell_height, av_range);
+display_model_curves(model_curves, k_means, k_errors, contact_point, cell_height, av_range);
 
 save_temp_file(z_curve, z_force_curve, z_indentation_curve, model_curves, ...
     k_means, k_errors, contact_point, cell_height, ind_range, sensy, k_tip,...
@@ -234,16 +168,18 @@ end
 
 %--------------------------------------------------------------------------
 % - DISPLAY Model Curves
-function display_model_curves(handles, model_curves, k_means, k_errors, contact_point,cell_height, ind_range)
-axes(handles.a_axes2);
+function display_model_curves(model_curves, k_means, k_errors, contact_point,cell_height, ind_range)
+
+%axes(handles.a_axes2);
+handles = gcf;
 cla;
 legend('off');
 
 x = [contact_point:size(model_curves{1},1)];
 max_k = k_means(1) * 1.5;
-if ~isempty(get(handles.e_k_scale_max,'String'))
-    max_k = str2double(get(handles.e_k_scale_max,'String'));
-end
+%if ~isempty(get(handles.e_k_scale_max,'String'))
+%    max_k = str2double(get(handles.e_k_scale_max,'String'));
+%end
 
 hold on;
 %plot(z_force_curve,'y');
