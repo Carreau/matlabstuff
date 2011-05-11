@@ -367,8 +367,10 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         end
         %lazy accessor copy past from previous: not good
         function f = get.still_trap_force(self)
-            f.x=squeeze(self.rawdata.f(1,1,:));
-            f.y=squeeze(self.rawdata.f(1,2,:));
+            %f.x=squeeze(self.rawdata.f(1,1,:));
+            %f.y=squeeze(self.rawdata.f(1,2,:));
+            f.x=self.still_trap.force.x;
+            f.y=self.still_trap.force.y;
             f.tangent=f.x*cos(self.approachAngle)+f.y*sin(self.approachAngle);
             f.perp   =-f.x*sin(self.approachAngle)+f.y*cos(self.approachAngle);
         end
