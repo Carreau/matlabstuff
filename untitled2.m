@@ -1,8 +1,8 @@
 %% load data
 g= temptest('30_mars_10cp_25apr.mat');
-g = [g temptest('30_mars_30cp_25apr.mat')];
-g = [g temptest('30_mars_50cp_25apr.mat')];
-g = [g temptest('8mars25Arp50cp.mat')];
+%g = [g temptest('30_mars_30cp_25apr.mat')];
+%g = [g temptest('30_mars_50cp_25apr.mat')];
+%g = [g temptest('8mars25Arp50cp.mat')];
 %g = [g temptest('8mars25arp00cp.mat')];
 %g = [g temptest('run1_1-mars-2011_25arp-10cp.mat')];
 %g = [g temptest('run3_1-mars-2011_25arp-30cp.mat')];
@@ -31,7 +31,7 @@ nn=[];
 clear f;
 tic;
 parfor i=1:length(g)
-	figure(1);
+	%figure(1);
 	
 	
 	mtx=[g(i).moving_trap.bead_pos_in_trap.x];
@@ -41,7 +41,6 @@ parfor i=1:length(g)
 	mtx=mtx(d:f);
 	stx=stx(d:f);
 	n=floor(sqrt(f-d));
-	range=[d:f];
 	nn= [nn n];
 	%plot(stx+mtx,'g');
 	%hold on;
@@ -54,23 +53,22 @@ parfor i=1:length(g)
 	m(i).ecr.x=std(mtx);
 
 	
-	hold off;
+	%hold off;
 	
-	figure(2);
-	hold off;
+	%figure(2);
+	%hold off;
 	mty=[g(i).moving_trap.bead_pos_in_trap.y];
 	sty=[g(i).still_trap.bead_pos_in_trap.y];
 	mty=mty(d:f);
 	sty=sty(d:f);
-	d=g(i).moving_trap.event.appr.stop;
-	f=g(i).moving_trap.event.retr_start;
+    
 	%plot(sty+mty,'+g');
 	hold on;
 	%plot(sty,'k.');
 	%plot(mty,'r.');
 	hold off
 	
-	figure(3)
+	%figure(3)
 	
 	[a,b]=hist(sty-mean(sty),n);
 	%plot(b,a,'r.');
@@ -157,11 +155,13 @@ for i=1:length(g)
 	   disp('on garde');
    end
 end
+%% f==g 
+f=g;
 
 %% liste des forces maximales
 mf=[];
-figure(1);
-hold on;
+%figure(1);
+%hold on;
 imax = length(f)
 for i=1:imax
 	exp=f(i);
@@ -174,23 +174,25 @@ for i=1:imax
 	%input('next...');
 	mf = [mf max(force)];
 end
-clear exp start stop
+clear exp start stop imax force i
 
 % f=g(mf > 0.8e-11);
 
 %% extract 'touch point' @tf (N)
-tf = 0.8e-11
-dd = [];
-for i=1:length(f)
+tf = 0.8e-11;
+imax = length(f);
+dd = zeros(imax);
+parfor i=1:imax
 	exp=f(i);
 	start=1;
 	stop = exp.moving_trap.event.appr.stop;
 	d= exp.bead_distance(start:stop);
 	force= exp.still_trap_force.tangent(start:stop);
 	ee=abs(force-tf);
-	dd=[dd d(find( ee == min(ee)))];
+	dd(i)=d( ee == min(ee));
+    fprintf('%d/%d\n',i,imax);
 end
-clear exp start stop d force ee;
+clear exp start stop d force ee imax;
 
 %% plot 
 cps = [f.cp];
@@ -211,7 +213,7 @@ xlabel('caping + ofset time');
 ylabel('touch point');
 title('touch point as a fonction of caping concentrationand time');
 
-%% try to fiti power coefficient 
+%% try to fit power coefficient 
 powercoeff=[];
 figure(1);
 clf; hold on;
@@ -275,7 +277,7 @@ figure(1);
 clf; hold on;
 figure(2)
 clf;
-irange=[4];
+irange=[1:36];
 n=100;
 zmean=[];
 zstd=[];
@@ -288,10 +290,12 @@ for i=irange;
     schunk=floor((stop-start)/n);
     X=[];Y=[];Z=[];
 	for a=1:15
-		m=10+2*a;
+		m=2*a;
         %m=2*a+13;
-		for b=1:20
-            nbr=2*b+8;
+		for b=1:5
+            
+            nbr=d(length(d)-floor((m/2+4))*schunk)+b*0.8;
+            nbr=b+12;
 			%nbr=2*b+18;
 			X(a,b)=m;
 			Y(a,b)=nbr;
@@ -316,8 +320,8 @@ for i=irange;
 			end
 			
 			l = length(Dhair);
-			fitrange=[l-nbr:l];
-			mm=nbr;
+			%fitrange=[l-nbr:l];
+            fitrange=(Dhair<nbr);
 			
 			figure(2);
 			clf;
@@ -326,20 +330,21 @@ for i=irange;
 			plot(log(Dhair),log(ppl),'r-');
 
 			p = polyfit(log(Dhair(fitrange)),log(ppl(fitrange)),1);
-			powercoeff = [powercoeff p(1)];
+			%powercoeff = [powercoeff p(1)];
 			plot(log(Dhair),p(1)*log(Dhair)+p(2),'g--');
 			plot(log(Dhair),-2*log(Dhair)-20,'k--');
 			
-			figure(1);
-			clf;
-			plot(powercoeff,'+');
+			%figure(1);
+			%clf;
+			%plot(powercoeff,'+');
 			Z(a,b)=p(1);
 			%mesh(X,Y,Z,'EdgeColor','black');
 			clear p;
-			fprintf('=',a,b);
+			fprintf('\b%d',b);
 			%input('next...');
         end
-        fprintf('\n');
+        %clear powercoeff;
+        fprintf('\b\b\b..');
     end
     fprintf('\n---------\n');
     figure(4);
@@ -350,19 +355,73 @@ for i=irange;
     zlabel('z: power law exponent');
     colormap hsv;
     colorbar;
-    zmean(i)=mean(reshape(ZZ,1,[]));
-    zstd(i)=std(reshape(ZZ,1,[]));
-end
+    zmean(i)=mean(reshape(Z,1,[]));
+    zstd(i)=std(reshape(Z,1,[]));
+
+clear Dhair Ehair a b cps d dd deltad delta dp exp fitrange force irange tm ttm ttm2 
 
 
-%%
-clear X Y Z
-[X,Y] = meshgrid(1:1:3);
-for a=1:50
-	for b=1:50
-		X(a,b)=a;
-		Y(a,b)=b;
-		Z(a,b)=sin(a/20)*sin(b/20);
+%
+%clear X Y Z
+
+s=size(Z);
+clear a b tmp stdz Xg Yg
+avgz=[];
+stdz=[];
+Xg=[];
+Yg=[];
+%[Xg,Yg] = meshgrid(1:1:3);
+urange=2;
+vrange=2;
+for a=[1+urange:s(1)-urange]
+	for b=[1+vrange:s(2)-vrange]
+        tmp=[];
+        for u=-urange:urange
+            for v=-vrange:vrange
+                tmp = [tmp Z(a+u,b+v)];
+            end
+        end
+        %tmp = [Z(a-1,b-1) Z(a-1,b) Z(a-1,b+1) Z(a,b-1) Z(a,b) Z(a,b+1) Z(a+1,b-1) Z(a+1,b) Z(a+1,b+1)];
+		avgz(a-urange,b-vrange)=mean(tmp);
+        stdz(a-urange,b-vrange)=std(tmp);
+        clear tmp
+        Xg(a-urange,b-vrange)=X(a,b);
+        Yg(a-urange,b-vrange)=Y(a,b);
 	end
 end;
-mesh(X,Y,Z,'EdgeColor','black');
+clear s
+%figure(3);
+%clf;
+%surf(Xg,Yg,stdz,'EdgeColor','black');
+%figure(4);
+%clf;
+%surf(Xg,Yg,avgz,'EdgeColor','black');
+% search least variance extract mean value
+avgzr=reshape(avgz,1,[]);
+stdzr=reshape(stdz,1,[]);
+stdzr_a(i) = min(stdzr);
+avgzr_a(i) = avgzr(stdzr==min(stdzr));
+ind=find(stdz==min(stdzr));
+s=size(stdz);
+row = mod(ind,s(1));
+col = (ind-row)/s(1)+1;
+m_a(i) = X(row+urange,col+vrange);
+nbr_a(i) = Y(row+urange,col+vrange);
+figure(1)
+clf;
+plot(m_a,'ro');
+ylabel('m');
+
+figure(3)
+clf;
+plot(nbr_a,'g*');
+ylabel('nbr');
+
+figure(4)
+clf;
+errorbar([1:length(avgzr_a)],avgzr_a,stdzr_a,'o');
+ylabel('avg');
+
+end
+ 
+
