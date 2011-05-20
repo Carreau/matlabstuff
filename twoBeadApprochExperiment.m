@@ -354,6 +354,7 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         end
         %lazy accesor
         function x = applyfun(self,fun)
+            x=zeros(size(self));
             for i=1:length(self)
                 x(i) = fun(self(i));
             end
