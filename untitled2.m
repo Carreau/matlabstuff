@@ -1,12 +1,12 @@
 %% load data
-g= temptest('30_mars_10cp_25apr.mat');
-%g = [g temptest('30_mars_30cp_25apr.mat')];
-%g = [g temptest('30_mars_50cp_25apr.mat')];
-%g = [g temptest('8mars25Arp50cp.mat')];
-%g = [g temptest('8mars25arp00cp.mat')];
-%g = [g temptest('run1_1-mars-2011_25arp-10cp.mat')];
-%g = [g temptest('run3_1-mars-2011_25arp-30cp.mat')];
-%g = [g temptest('run4_1-mars-2011_25arp-30cp.mat')];
+g =    temptest('30_mars_10cp_25apr.mat');
+g = [g temptest('30_mars_30cp_25apr.mat')];
+g = [g temptest('30_mars_50cp_25apr.mat')];
+g = [g temptest('8mars25Arp50cp.mat')];
+g = [g temptest('8mars25arp00cp.mat')];
+g = [g temptest('run1_1-mars-2011_25arp-10cp.mat')];
+g = [g temptest('run3_1-mars-2011_25arp-30cp.mat')];
+g = [g temptest('run4_1-mars-2011_25arp-30cp.mat')];
 
 %%
 i=0;
@@ -176,12 +176,13 @@ for i=1:imax
 end
 clear exp start stop imax force i
 
-% f=g(mf > 0.8e-11);
+%%
+f=g(mf > 0.8e-11);
 
 %% extract 'touch point' @tf (N)
 tf = 0.8e-11;
 imax = length(f);
-dd = zeros(imax);
+dd = zeros(size(imax));
 parfor i=1:imax
 	exp=f(i);
 	start=1;
@@ -203,7 +204,7 @@ hold on;
 for vcp=[0 10 30 50]
 	dp = dd(cps == vcp);
 	ttm = tm(cps == vcp);
-	xx = [1:(length(ttm))]-length(ttm)/2;
+	xx = (1:(length(ttm)))-length(ttm)/2;
 	ttm2 = [xx;ttm];
 	ttm2 = sortrows(ttm2',2)';
 	plot(vcp*ones(size(dp))+(ttm2(2,:)-(min(ttm2(2,:))+max(ttm2(2,:)))/2)/3,dp,'+');
@@ -214,19 +215,29 @@ ylabel('touch point');
 title('touch point as a fonction of caping concentrationand time');
 
 %% try to fit power coefficient 
-powercoeff=[];
+powercoeff=[];errcoeff=[];
+powercoeff2=[];
 figure(1);
 clf; hold on;
 figure(2)
 clf;
-for i=1:length(f)
+i=1
+for i=-10:10
+    
 	Ehair=[];
 	Dhair=[];
-	exp=f(i);
+	%exp=f(i);
 	start=1;
 	stop = exp.moving_trap.event.appr.stop;
 	d= exp.bead_distance(start:stop);
 	force= abs(exp.still_trap_force.tangent(start:stop));
+    %
+    d=[10:-0.001:3];
+    fc=@(x) 1/(x-i/10)^2;
+    force = arrayfun(fc,d);
+    start = 1;
+    stop = length(d);
+    %
 	n=50;m=10;
 	schunk=floor((stop-start)/n);
 	lchunk=m*schunk;
@@ -235,6 +246,8 @@ for i=1:length(f)
 	hold on;
 	plot(d,force,'+');
 	ppl=[];
+    ldh0=0;
+    
 	for j=1:(n-m)
 		 tempdd = mean(d(j*schunk:j*schunk+lchunk));
 		 Dhair = [Dhair tempdd];
@@ -247,65 +260,85 @@ for i=1:length(f)
 		 Ehair = [Ehair abs(deltaf*tempdd/deltad)];
 		 figure(3)
 		 clear tempdd
-	end
+    end
+    if(i==1)
+        ldh0=0;log(Dhair(end));
+        leh0=0;log(Ehair(end));
+        %continue
+    end
 	figure(2);
-	clf;
+	%clf;
 	%semilogy(Dhair,Ehair,'+-');
-	plot(log(Dhair),log(Ehair),'+-');
+	%plot(log(Dhair)-ldh0,log(Ehair)-leh0,'+-');
 	hold on;
 	%semilogy(Dhair,ppl,'ro-');
-	plot(log(Dhair),log(ppl),'ro-');
+	plot(log(Dhair)-ldh0,log(ppl)-leh0,'ro-');
 	l = length(Dhair);
-	nbr=10;
-	p = polyfit(log(Dhair(l-20:l)),log(ppl(l-20:l)),1);
+	nbr=6;
+	p = polyfit(log(Dhair(l-nbr:l))-ldh0,log(ppl(l-nbr:l))-leh0,1);
+    plot(log(Dhair(l-nbr:l))-ldh0,log(ppl(l-nbr:l))-leh0,'g.');
 	powercoeff = [powercoeff p(1)];
-	plot(log(Dhair),p(1)*log(Dhair)+p(2),'g--');
-	plot(log(Dhair),-2*log(Dhair)-20,'k--');
+    powercoeff2 = [powercoeff2 p(2)];
+    %calculons l'erreur
+    tmpxx = log(Dhair(l-nbr:l))-ldh0;
+    tmpyy = log(ppl(l-nbr:l))-leh0;
+    fx=@(x) p(1)*x+p(2);
+    eee=sum((tmpyy - fx(tmpxx)).^2 );
+    clear tmpyy tmpxx fx
+    errcoeff = [errcoeff eee*10];
+
+	plot(log(Dhair)-ldh0,p(1)*log(Dhair)+p(2),'g--');
+	%plot(log(Dhair)-ldh0,-2*log(Dhair)-20,'k--');
 	%isd = 1 ./ (Dhair .^2)
 	%semilogy(Dhair,isd,'.k');
 	figure(1);
 	clf;
-	plot(powercoeff,'+');
+    hold on;
+	errorbar([1:length(powercoeff)],powercoeff,errcoeff,'+');
+    errorbar([1:length(powercoeff)],powercoeff2,errcoeff,'g.');
 	%clear p;
 	fprintf('%d/%d',i,length(f));
 	%input('next...');
 end
 
 %% let's try to do the same for one curve, by changing the sliding value...
-powercoeff=[];
 figure(1);
 clf; hold on;
 figure(2)
 clf;
-irange=[1:36];
-n=100;
+% let selec the data we will fit 
+irange=[1];
+
+powercoeff=[];
 zmean=[];
 zstd=[];
+
+n=100;
 for i=irange;
     exp=f(i);
     start=1;
     stop = exp.moving_trap.event.appr.stop;
-    d= exp.bead_distance(start:stop);
+    d=exp.bead_distance(start:stop)-dd(i)+min(dd)+1;
     force= abs(exp.still_trap_force.tangent(start:stop));
     schunk=floor((stop-start)/n);
     X=[];Y=[];Z=[];
 	for a=1:15
 		m=2*a;
         %m=2*a+13;
-		for b=1:5
+		for b=1:30
             
-            nbr=d(length(d)-floor((m/2+4))*schunk)+b*0.8;
-            nbr=b+12;
+            nbr=d(length(d)-floor((m/2))*schunk)+b*0.2;
+            %nbr=b+12;
 			%nbr=2*b+18;
 			X(a,b)=m;
 			Y(a,b)=nbr;
 			Ehair=[];
 			Dhair=[];
 			lchunk=m*schunk;
-			%figure(3);
-			%clf;
-			%hold on;
-			%plot(d,force,'+');
+			figure(3);
+			clf;
+			hold on;
+			plot(d,force,'+');
 			ppl=[];
 			for j=1:(n-m)
 				 tempdd = mean(d(j*schunk:j*schunk+lchunk));
@@ -314,7 +347,7 @@ for i=irange;
 				 deltaf = force(j*schunk)-force(j*schunk+lchunk);
 				 p=polyfit(d(j*schunk:j*schunk+lchunk),force(j*schunk:j*schunk+lchunk),1);
 				 ppl= [ppl abs(p(1)*tempdd)];
-				 %plot([d(j*schunk) d(j*schunk+lchunk)],[force(j*schunk) force(j*schunk+lchunk)],'ro-');
+				 plot([d(j*schunk) d(j*schunk+lchunk)],[force(j*schunk) force(j*schunk+lchunk)],'ro-');
 				 Ehair = [Ehair abs(deltaf*tempdd/deltad)];
 				 clear tempdd p;
 			end
@@ -330,13 +363,13 @@ for i=irange;
 			plot(log(Dhair),log(ppl),'r-');
 
 			p = polyfit(log(Dhair(fitrange)),log(ppl(fitrange)),1);
-			%powercoeff = [powercoeff p(1)];
+			powercoeff = [powercoeff p(1)];
 			plot(log(Dhair),p(1)*log(Dhair)+p(2),'g--');
 			plot(log(Dhair),-2*log(Dhair)-20,'k--');
 			
-			%figure(1);
-			%clf;
-			%plot(powercoeff,'+');
+			figure(1);
+			clf;
+			plot(powercoeff,'+');
 			Z(a,b)=p(1);
 			%mesh(X,Y,Z,'EdgeColor','black');
 			clear p;
@@ -409,13 +442,14 @@ m_a(i) = X(row+urange,col+vrange);
 nbr_a(i) = Y(row+urange,col+vrange);
 figure(1)
 clf;
-plot(m_a,'ro');
+plot(nbr_a,m_a,'ro');
+xlabel('nbr');
 ylabel('m');
 
-figure(3)
-clf;
-plot(nbr_a,'g*');
-ylabel('nbr');
+%figure(3)
+%clf;
+%plot(nbr_a,'g*');
+%ylabel('nbr');
 
 figure(4)
 clf;
@@ -423,5 +457,117 @@ errorbar([1:length(avgzr_a)],avgzr_a,stdzr_a,'o');
 ylabel('avg');
 
 end
+
+
+
+%% tetative rescaling
+% on va essayer de traiter toute les courbes de façon à avoir 
+% en (0,1) le point avec un maximum de force
+% et en (1/2) (1/2) le point avec le maximum de force sur 2
+
+figure(2);
+clf
+rescaledForce_a = [];
+rescaledDistance_a = [];
+dd_a = [];
+fmax_a =[];
+for i=1:length(g);
+    exp   = g(i);
+    start = exp.moving_trap.event.appr.start;
+    stop  = exp.moving_trap.event.appr.stop;
+
+    distance = exp.bead_distance(start:stop);
+    force    = exp.still_trap_force.tangent(start:stop);
+
+    %determination de la force maximal
+    [maxforce,maxindice] = max(force);
+    maxdistance          = distance(maxindice);
+    fmax_a = [fmax_a maxforce];
+    %determination de la force à la moitiée et de la distance correspondante
+    frac=1/2;
+    demimax = maxforce*frac;
+
+    [~,demiindice] = min(abs(force-demimax));
+    demiforce      = force(demiindice);
+    demidistance   = distance(demiindice);
+
+    %figure(1);
+    %clf
+    %hold on;
+    %plot(distance,force,'g+');
+    %plot([maxdistance demidistance],[maxforce demiforce],'ro');
+
+    figure(2);
+    hold on;
+    dd_a = [dd_a (demidistance-maxdistance)];
+    rescaledDistance = (distance-maxdistance)/(demidistance-maxdistance);
+    rescaledForce    = (force/maxforce);
+    %plot(rescaledDistance,rescaledForce,':');
+    %plot([0 1],[1 frac],'ro');
+    fprintf('\b\b\b\b\b\b\b%03d/%03d',i,length(g));
+    rescaledDistance_a = [rescaledDistance_a rescaledDistance];
+    rescaledForce_a = [rescaledForce_a rescaledForce];
+    
+    clear demidistance demiforce demiindice maxforce maxindice maxdistance rescaledDistance 
+    clear demimax i start stop force distance ans rescaledForce exp
+end
+
+%à trier
+tosort = [rescaledDistance_a;rescaledForce_a];
+sorted = sortrows(tosort',1)';
+clear tosort rescaledDistance_a rescaledForce_a;
+
+sortedDistance = sorted(1,:);
+sortedForce = sorted(2,:);
+
+%let's do packet of...
+n=70;
+dmax=max(sortedDistance(sortedDistance < 50));
+step = dmax/n;
+for i=1:n
+  keep = sortedDistance > (i-1)*step & sortedDistance < i*step ;
+  stat.d(i) = mean(sortedDistance(keep));
+  stat.f(i) = mean(   sortedForce(keep));
+  stat.dstd(i) = std(sortedDistance(keep));
+  stat.fstd(i) = std(   sortedForce(keep));
+end
+
+clear sorted sortedDistance step keep
+clear sortedForce dmax n
+figure(1)
+clf;
+hold on;
+errorbar(stat.d,stat.f,stat.fstd,'k'); 
+plot([0 1],[1 frac],'ro');
+
+%%
+figure(3);
+range=2:20;
+ofset = 1;
+%hold on;
+p=polyfit(log(stat.d(range)+ofset),log(stat.f(range)),1);
+%clf
+%plot(log(stat.d(range)),log(stat.f(range)),'ro');
+
+
+%plot(log(stat.d),log(stat.f),'*');
+
+%
+loglog((stat.d+ofset),(stat.f),'o');
+hold on
+%axis equal
+loglog(stat.d+ofset,exp(polyval(p,log(stat.d+ofset))),'k--');
+
+
+
+
+
+
+
+
+
+
+
+
  
 
