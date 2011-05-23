@@ -221,20 +221,22 @@ figure(1);
 clf; hold on;
 figure(2)
 clf;
-i=1
+i=1;
+ldh0=0;
+leh0=0;
 for i=-10:10
     
 	Ehair=[];
 	Dhair=[];
 	%exp=f(i);
 	start=1;
-	stop = exp.moving_trap.event.appr.stop;
-	d= exp.bead_distance(start:stop);
-	force= abs(exp.still_trap_force.tangent(start:stop));
-    %
-    d=[10:-0.001:3];
+	%stop = exp.moving_trap.event.appr.stop;
+	%d= exp.bead_distance(start:stop);
+	%force= abs(exp.still_trap_force.tangent(start:stop));
+    d=[10:-0.001:1.3];
     fc=@(x) 1/(x-i/10)^2;
-    force = arrayfun(fc,d);
+    force = arrayfun(fc,d)+randn(size(d))/10;
+    d= d+randn(size(d))/10;
     start = 1;
     stop = length(d);
     %
@@ -267,9 +269,9 @@ for i=-10:10
         %continue
     end
 	figure(2);
-	%clf;
-	%semilogy(Dhair,Ehair,'+-');
-	%plot(log(Dhair)-ldh0,log(Ehair)-leh0,'+-');
+	clf;
+	semilogy(Dhair,Ehair,'+-');
+	plot(log(Dhair)-ldh0,log(Ehair)-leh0,'+-');
 	hold on;
 	%semilogy(Dhair,ppl,'ro-');
 	plot(log(Dhair)-ldh0,log(ppl)-leh0,'ro-');
