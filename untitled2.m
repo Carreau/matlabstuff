@@ -1,12 +1,12 @@
 %% load data
 g =    temptest('30_mars_10cp_25apr.mat');
-g = [g temptest('30_mars_30cp_25apr.mat')];
-g = [g temptest('30_mars_50cp_25apr.mat')];
-g = [g temptest('8mars25Arp50cp.mat')];
-g = [g temptest('8mars25arp00cp.mat')];
-g = [g temptest('run1_1-mars-2011_25arp-10cp.mat')];
-g = [g temptest('run3_1-mars-2011_25arp-30cp.mat')];
-g = [g temptest('run4_1-mars-2011_25arp-30cp.mat')];
+%g = [g temptest('30_mars_30cp_25apr.mat')];
+%g = [g temptest('30_mars_50cp_25apr.mat')];
+%g = [g temptest('8mars25Arp50cp.mat')];
+%g = [g temptest('8mars25arp00cp.mat')];
+%g = [g temptest('run1_1-mars-2011_25arp-10cp.mat')];
+%g = [g temptest('run3_1-mars-2011_25arp-30cp.mat')];
+%g = [g temptest('run4_1-mars-2011_25arp-30cp.mat')];
 
 %%
 i=0;

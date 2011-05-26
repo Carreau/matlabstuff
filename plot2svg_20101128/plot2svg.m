@@ -2,6 +2,7 @@ function varargout = plot2svg(param1,id,pixelfiletype)
 %  Matlab to SVG converter
 %  Prelinary version supporting 3D plots as well
 %
+%  set(0,'defaulttextinterpreter','none')
 %  Usage: plot2svg(filename,graphic handle,pixelfiletype)
 %                  optional     optional     optional
 %         or
