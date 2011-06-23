@@ -1,0 +1,1027 @@
+function varargout = AFM_viscoela_GUI(varargin)
+tbae=varargin{1};
+start=1;
+stop =tbae.moving_trap.event.appr.stop;
+%%
+z_force_curve=tbae.still_trap.force.r(start:stop);
+z_indentation_curve=tbae.fitvalue.d0-tbae.bead_distance(start:stop);
+z_curve = tbae.bead_distance;
+%%plot(z_indentation_curve,z_force_curve,'+');
+sensy=1;
+r_tip=4.5e-6;
+k_tip=(tbae.still_trap.kappa.x+tbae.still_trap.kappa.y)/2;
+cell_height = tbae.fitvalue.d0-4.5;
+contact_point=tbae.fitvalue.d0;
+visco=0;
+
+model_curves = apply_models(z_curve, z_force_curve, z_indentation_curve, sensy, r_tip, k_tip, cell_height, contact_point, visco);
+
+ind_range = [-10 10];
+[k_means,k_errors,av_range] = calc_k(model_curves, contact_point, ind_range);
+display_model_curves(model_curves, k_means, k_errors, contact_point, cell_height, av_range);
+
+save_temp_file(z_curve, z_force_curve, z_indentation_curve, model_curves, ...
+    k_means, k_errors, contact_point, cell_height, ind_range, sensy, k_tip,...
+    cp_thresh, r_tip, z_curve_info);
+
+
+
+
+%--------------------------------------------------------------------------
+% - GET FORCE INDENTATION CURVE
+function [z_force_curve, z_indentation_curve, z_cell_thickness_curve, cell_height] =...
+    get_force_indentation_curve(z_curve, sensy, k_tip, contact_point, substrate_height)
+% Force curve, just use the senstivity and Hookes law
+z_force_curve = z_curve(:,2)*sensy*k_tip;
+
+% Indentation curve. Take the measured heigth and the contact point
+z_indentation_curve = z_curve(contact_point,1) - z_curve(:,1) - (z_curve(:,2).*sensy);
+z_indentation_curve(z_indentation_curve < 0) = 0; %Still above the cell
+
+% Cell thickness curve. Take the measured heigth and the substrate height
+% at the point
+z_cell_thickness_curve = z_curve(:,1) - substrate_height;
+cell_height = z_curve(contact_point,1) - substrate_height;
+
+
+%--------------------------------------------------------------------------
+% - APPLY MODELS
+function [model_curves] = apply_models(z_curve, z_force_curve, z_indentation_curve, sensy, r_tip, k_tip, cell_height, contact_point, visco)
+global li_amp_av
+
+if ~(visco(1))
+% STATIC CASE
+% apply HERTZ MODEL
+for (ii = 1:size(z_force_curve,1))
+    if ((z_force_curve(ii) > 0) && z_indentation_curve(ii) > 0)
+        z_hertz_curve(ii,1) = (3/4) * z_force_curve(ii) / sqrt(r_tip*(z_indentation_curve(ii)^3));
+    else
+        z_hertz_curve(ii,1) = 0;
+    end
+% calculate CHEN and TU MODEL from HERTZ MODEL
+    dr_h2 = z_indentation_curve(ii) * r_tip / (cell_height*cell_height);
+
+    z_chen_0(ii,1) = z_hertz_curve(ii) * look_up_mod(dr_h2,1,visco(1));
+    z_chen_1(ii,1) = z_hertz_curve(ii) * look_up_mod(dr_h2,2,visco(1));
+    z_chen_2(ii,1) = z_hertz_curve(ii) * look_up_mod(dr_h2,3,visco(1));
+    z_chen_3(ii,1) = z_hertz_curve(ii) * look_up_mod(dr_h2,4,visco(1));
+    z_chen_4(ii,1) = z_hertz_curve(ii) * look_up_mod(dr_h2,5,visco(1));
+    z_chen_5(ii,1) = z_hertz_curve(ii) * look_up_mod(dr_h2,6,visco(1));
+    z_tu(ii,1) = z_hertz_curve(ii) * look_up_mod(dr_h2,7,visco(1));
+end
+model_curves{1} = z_hertz_curve;
+
+end
+
+%visco(1) = get(handles.e_visco,'Value');
+%visco(2) = str2double(get(handles.e_freq,'string'));
+%visco(3) = str2double(get(handles.e_amp,'string'));
+%VISCO CASE
+if visco(1)
+
+    %Get drag coefficient
+    drag_temp = nanmean(z_curve([1:floor(contact_point*0.9)],7));
+    lock_in_gamma = k_tip / (2*pi*visco(2)) * (abs(drag_temp)*sensy) / li_amp_av;
+    cz_pol = z_curve(:,4) * sensy;
+    cz_pol(:,2) = z_curve(:,5);
+    [cz_cart(:,1),cz_cart(:,2)] = pol2cart(cz_pol(:,2),cz_pol(:,1));            % Polar coordinates (Angle, Amp)
+    
+    cind_cart = li_amp_av - cz_cart(:,1);
+    cind_cart(:,2) = - cz_cart(:,2);
+    [cind_pol(:,2),cind_pol(:,1)] = cart2pol(cind_cart(:,1),cind_cart(:,2));
+    
+    cforce_tot_pol = k_tip*cz_pol(:,1);
+    cforce_tot_pol(:,2) = cz_pol(:,2);
+    [cforce_tot_cart(:,1),cforce_tot_cart(:,2)] = pol2cart(cforce_tot_pol(:,2),cforce_tot_pol(:,1));
+    
+    cdrag_pol = 2*pi*visco(2)*lock_in_gamma*cind_pol(:,1);
+    cdrag_pol(:,2) = cind_pol(:,2) + pi/2;
+    [cdrag_cart(:,1),cdrag_cart(:,2)] = pol2cart(cdrag_pol(:,2),cdrag_pol(:,1));
+    
+    cforce_osc_cart = cforce_tot_cart - cdrag_cart;
+    
+    [cforce_osc_pol(:,2),cforce_osc_pol(:,1)] = cart2pol(cforce_osc_cart(:,1),cforce_osc_cart(:,2));
+    
+    for (ii = 1:size(z_curve,1))
+        if cind_pol(ii,1) > 0
+            chertz_pol(ii,1) = cforce_osc_pol(ii,1)/(2*cind_pol(ii,1)*sqrt(r_tip*z_indentation_curve(ii)));
+            chertz_pol(ii,2) = cforce_osc_pol(ii,2)-cind_pol(ii,2);
+            
+            chooke_pol(ii,1) = cforce_osc_pol(ii,1)/cind_pol(ii,1);
+            chooke_pol(ii,2) = chertz_pol(ii,2);
+        else
+            chertz_pol(ii,1) = 0;
+            chertz_pol(ii,2) = cforce_osc_pol(ii,2)-cind_pol(ii,2);
+            
+            chooke_pol(ii,1) = 0;
+            chooke_pol(ii,2) = chertz_pol(ii,2);
+        end
+        [chertz_cart(ii,1),chertz_cart(ii,2)] = pol2cart(chertz_pol(ii,2),chertz_pol(ii,1));
+        [chooke_cart(ii,1),chooke_cart(ii,2)] = pol2cart(chooke_pol(ii,2),chooke_pol(ii,1));
+        dr_h2 = z_indentation_curve(ii) * r_tip / (cell_height*cell_height);
+        
+        %Real
+        z_chen_0(ii,1) = chertz_cart(ii,1) * look_up_mod(dr_h2,1,visco(1));
+        z_chen_1(ii,1) = chertz_cart(ii,1) * look_up_mod(dr_h2,2,visco(1));
+        z_chen_2(ii,1) = chertz_cart(ii,1) * look_up_mod(dr_h2,3,visco(1));
+        z_chen_3(ii,1) = chertz_cart(ii,1) * look_up_mod(dr_h2,4,visco(1));
+        z_chen_4(ii,1) = chertz_cart(ii,1) * look_up_mod(dr_h2,5,visco(1));
+        z_chen_5(ii,1) = chertz_cart(ii,1) * look_up_mod(dr_h2,6,visco(1));
+        z_tu(ii) = chertz_cart(ii) * look_up_mod(dr_h2,7,visco(1));
+        %Imag
+        z_chen_0(ii,2) = chertz_cart(ii,2) * look_up_mod(dr_h2,1,visco(1));
+        z_chen_1(ii,2) = chertz_cart(ii,2) * look_up_mod(dr_h2,2,visco(1));
+        z_chen_2(ii,2) = chertz_cart(ii,2) * look_up_mod(dr_h2,3,visco(1));
+        z_chen_3(ii,2) = chertz_cart(ii,2) * look_up_mod(dr_h2,4,visco(1));
+        z_chen_4(ii,2) = chertz_cart(ii,2) * look_up_mod(dr_h2,5,visco(1));
+        z_chen_5(ii,2) = chertz_cart(ii,2) * look_up_mod(dr_h2,6,visco(1));
+        z_tu(ii,2) = chertz_cart(ii,2) * look_up_mod(dr_h2,7,visco(1));
+    end
+model_curves{1} = chertz_cart;
+end
+model_curves{2} = z_chen_0;
+model_curves{3} = z_chen_1;
+model_curves{4} = z_chen_2;
+model_curves{5} = z_chen_3;
+model_curves{6} = z_chen_4;
+model_curves{7} = z_chen_5;
+model_curves{8} = z_tu;
+
+
+
+
+%--------------------------------------------------------------------------
+% - CALCULATE average Ks and Errors thereof
+function [k_means,k_errors, av_range] = calc_k(model_curves, contact_point, ind_range);
+% shift the indentation range, if neccessary
+av_range(1) = contact_point + ind_range(1);
+av_range(2) = contact_point + ind_range(2);
+if (av_range(2) > size(model_curves{1},1))
+    av_range(2) = size(model_curves{1},1);
+end
+
+for (j = 1:8)
+    k_means(j) = nanmean(model_curves{j}(av_range(1):av_range(2)));
+    k_errors(j) = std(model_curves{j}(av_range(1):av_range(2)));
+end
+
+
+%--------------------------------------------------------------------------
+% - DISPLAY Model Curves
+function display_model_curves(model_curves, k_means, k_errors, contact_point,cell_height, ind_range)
+
+%axes(handles.a_axes2);
+handles = gcf;
+cla;
+legend('off');
+
+x = [contact_point:size(model_curves{1},1)];
+max_k = k_means(1) * 1.5;
+%if ~isempty(get(handles.e_k_scale_max,'String'))
+%    max_k = str2double(get(handles.e_k_scale_max,'String'));
+%end
+
+hold on;
+%plot(z_force_curve,'y');
+plot(x,model_curves{1}(contact_point:end,1),'g');
+plot(x,model_curves{4}(contact_point:end,1),'c');
+plot(x,model_curves{5}(contact_point:end,1),'m');
+plot(x,model_curves{6}(contact_point:end,1),'b');
+plot(x,model_curves{7}(contact_point:end,1),'k');
+plot(x,model_curves{8}(contact_point:end,1),'r');
+plot([ind_range(1),ind_range(1)],[0,max_k],':k');
+plot([ind_range(2),ind_range(2)],[0,max_k],':k');
+plot([x(1),x(end)],[k_means(1),k_means(1)],':g');
+plot([x(1),x(end)],[k_means(4),k_means(4)],':c');
+plot([x(1),x(end)],[k_means(5),k_means(5)],':m');
+plot([x(1),x(end)],[k_means(6),k_means(6)],':b');
+plot([x(1),x(end)],[k_means(7),k_means(7)],':k');
+plot([x(1),x(end)],[k_means(8),k_means(8)],':r');
+hold off;
+ylim([0, max_k]);
+
+set(handles.e_k_hertz,'string',num2str(k_means(1),'%5.0f'));
+set(handles.e_k_c0,'string',num2str(k_means(2),'%5.0f'));
+set(handles.e_k_c1,'string',num2str(k_means(3),'%5.0f'));
+set(handles.e_k_c2,'string',num2str(k_means(4),'%5.0f'));
+set(handles.e_k_c3,'string',num2str(k_means(5),'%5.0f'));
+set(handles.e_k_c4,'string',num2str(k_means(6),'%5.0f'));
+set(handles.e_k_c5,'string',num2str(k_means(7),'%5.0f'));
+set(handles.e_k_tu,'string',num2str(k_means(8),'%5.0f'));
+set(handles.e_e_hertz,'string',num2str(k_errors(1),'%5.0f'));
+set(handles.e_e_c0,'string',num2str(k_errors(2),'%5.0f'));
+set(handles.e_e_c1,'string',num2str(k_errors(3),'%5.0f'));
+set(handles.e_e_c2,'string',num2str(k_errors(4),'%5.0f'));
+set(handles.e_e_c3,'string',num2str(k_errors(5),'%5.0f'));
+set(handles.e_e_c4,'string',num2str(k_errors(6),'%5.0f'));
+set(handles.e_e_c5,'string',num2str(k_errors(7),'%5.0f'));
+set(handles.e_e_tu,'string',num2str(k_errors(8),'%5.0f'));
+
+set(handles.e_contact_point,'string',num2str(contact_point,'%5.0f'));
+set(handles.e_cell_height,'string',num2str(cell_height*1E9,'%5.0f'));
+
+set(handles.e_range_act_start,'string',num2str(ind_range(1),'%5.0f'));
+set(handles.e_range_act_end,'string',num2str(ind_range(2),'%5.0f'));
+
+
+%--------------------------------------------------------------------------
+% - FIND SUBSTRATE HEIGHT
+function [substrate_height] = get_substrate_height(x_in,y_in)
+global dz_per_dx
+global dz_per_dy
+global g1x
+global g1y
+global g1z
+
+substrate_height = g1z + dz_per_dx*(x_in - g1x) + dz_per_dy*(y_in - g1y);
+
+%--------------------------------------------------------------------------
+% - GET SUBSTRATE TILT
+function [g1,g2,g3,contact_point_1,contact_point_2,contact_point_3,gf1,gf2,gf3] = get_substrate_tilt(cp_thresh, visco, sensy)
+global glass_curves
+global dz_per_dx
+global dz_per_dy
+global g1x
+global g1y
+global g1z
+global visco_drag
+global li_amp_av
+
+[g1, g1_info] = read_in_curve(glass_curves{1},visco);
+[g2, g2_info] = read_in_curve(glass_curves{2},visco);
+[g3, g3_info] = read_in_curve(glass_curves{3},visco);
+
+[g1, contact_point_1,gf1] = glass_contact_point(g1, cp_thresh*30);
+[g2, contact_point_2,gf2] = glass_contact_point(g2, cp_thresh*30);
+[g3, contact_point_3,gf3] = glass_contact_point(g3, cp_thresh*30);
+
+g1x = g1_info(1);
+g1y = g1_info(2);
+g1z = g1(contact_point_1,1);
+g2x = g2_info(1);
+g2y = g2_info(2);
+g2z = g2(contact_point_2,1);
+g3x = g3_info(1);
+g3y = g3_info(2);
+g3z = g3(contact_point_3,1);
+
+ax = g1x - g2x;
+ay = g1y - g2y;
+az = g1z - g2z;
+
+bx = g1x - g3x;
+by = g1y - g3y;
+bz = g1z - g3z;
+
+nx = ay*bz - az*by;
+ny = az*bx - ax*bz;
+nz = ax*by - ay*bx;
+
+if (nz>0)
+    nx = -nx;
+    ny = -ny;
+end
+n = sqrt(nx^2 + ny^2 + nz^2);
+
+dz_per_dx = nx/n;
+dz_per_dy = ny/n;
+
+% LockIn excitation amplitude 
+
+li_amp_av = nanmean(g1(contact_point_1:end,4))*sensy;       %zsexcite
+
+%visco_
+%          for (i=s_starti,livalue=0.;i<=s_endi;i++)   livalue+=glass_cvd[_POWER][i];   /* Phase=0 */
+%          livalue/=(s_endi-s_starti)+1;    
+%          *zsexcit = livalue * (*sens);                        /* dz=dvd*sens */
+
+
+
+
+
+
+%--------------------------------------------------------------------------
+% - GET DATA FOLDER
+function b_get_folder_Callback(hObject, eventdata, handles)
+global data_folder
+global data_list
+global curve_no
+global z_curve
+global z_curve_info
+global save_folder
+
+temp_folder = uigetdir(data_folder);
+if (temp_folder ~= 0)
+    data_folder = temp_folder;
+end
+mkdir(data_folder,'eval');
+save_folder = [data_folder,'\eval'];
+
+set(handles.e_data_folder,'string',data_folder);
+set(handles.e_save_folder,'string',save_folder);
+
+data_list = dir([data_folder,'\*.out']);
+curve_no = 1;
+[z_curve, z_curve_info] = read_in_curve([data_folder,'\',data_list(curve_no).name],[0,0,0]);
+axes(handles.a_axes);
+plot(z_curve(:,1),z_curve(:,2));
+set(handles.e_cur_curve,'string',[data_folder,'\',data_list(curve_no).name]);
+
+
+%--------------------------------------------------------------------------
+% - LOOK UP MODEL CORRECTION FACTOR
+function [mod_factor] = look_up_mod(dr_h2,mod,type)
+global cell_mod_table
+global cell_visc_table
+% 1 = chen0 ; 2 = chen0.1; 3 = chen0.2; 4 = chen0.3; 5 = chen 0.4; 6 =
+% chen0.5; 7 = tu
+mod = mod*2;
+if (type) % viscoelastic case
+    mod_factor = interp1q(cell_visc_table(:,(mod-1)),cell_visc_table(:,(mod)),dr_h2);
+else
+    % look up the mod-factor, use linear interpolation between the table values
+    mod_factor = interp1q(cell_mod_table(:,(mod-1)),cell_mod_table(:,(mod)),dr_h2);
+end
+
+
+
+
+
+%--------------------------------------------------------------------------
+% - FIND CONTACT POINT
+function [z_curve, contact_point] = find_contact_point(z_curve, cp_thresh, visco)
+global g_hand
+% Start from above the cell, take a smoothed signal, assume the first 100
+% points to be sure above the cell to define the baseline, look for the
+% first change in the first derivative of VD to be larger than cp_thresh
+
+
+% baseline = mean(z_curve(1:200,2));
+% z_curve(:,2) = z_curve(:,2) - baseline;
+smoothed_vd = smooth(z_curve(:,2),50,'lowess');
+dvd = diff(smoothed_vd);
+i = 1;
+while dvd(i)<cp_thresh
+    i = i+1;
+end
+if i < 126
+    i=126;
+end
+
+    % Baseline correction, linear fit to the region above the contact point
+    baseline_fun = fit(z_curve(1:i-50,1),z_curve(1:i-50,2),'poly1');
+    base_corr = feval(baseline_fun,z_curve(:,1));
+    smoothed_vd = smoothed_vd - base_corr;
+    z_curve(:,2) = z_curve(:,2) - base_corr;
+    
+
+i = i-25;
+contact_point = i;
+disp(['contact point = ',num2str(i)]);
+
+% figure
+axes(g_hand.a_axes3);
+cla
+hold on;
+plot(z_curve((i-100):(i+50),1),z_curve((i-100):(i+50),2),'k')
+plot(z_curve((i-100):(i+50),1),smoothed_vd((i-100):(i+50)),'b')
+plot(z_curve(i,1),smoothed_vd(i),'xr','MarkerSize',12);
+set(gca,'YGrid','on');
+yLim('auto');
+set(gca,'XLim',[z_curve((i+50),1),z_curve((i-100),1)]);
+hold off;
+
+axes(g_hand.a_axes);
+cla
+hold on;
+plot(z_curve(:,1),z_curve(:,2),'k')
+plot(z_curve(:,1),smoothed_vd,'b')
+plot(z_curve(i,1),smoothed_vd(i),'xr','MarkerSize',12);
+set(gca,'XLim',[z_curve(end,1),z_curve(1,1)]);
+yLim('auto');
+set(gca,'YGrid','on');
+hold off;
+blubb = 0;
+
+%--------------------------------------------------------------------------
+% Find Glass-curve contact point
+function [z_curve, contact_point, glass_fun] = glass_contact_point(z_curve, cp_thresh)
+% Start from above the cell, take a smoothed signal, assume the first 100
+% points to be sure above the cell to define the baseline, look for the
+% first change in the first derivative of VD to be larger than cp_thresh
+
+
+% baseline = mean(z_curve(1:200,2));
+% z_curve(:,2) = z_curve(:,2) - baseline;
+smoothed_vd = smooth(z_curve(:,2),50,'lowess');
+
+% Baseline correction, linear fit to the region above the contact point
+baseline_fun = fit(z_curve(1:200,1),z_curve(1:200,2),'poly1');
+base_corr = feval(baseline_fun,z_curve(:,1));
+smoothed_vd = smoothed_vd - base_corr;
+z_curve(:,2) = z_curve(:,2) - base_corr;
+
+dvd = diff(smoothed_vd);
+i = 1;
+while dvd(i)<cp_thresh
+    i = i+1;
+end
+glass_fun = fit(z_curve(i:end,1),z_curve(i:end,2),'poly1');
+glass_ev = feval(glass_fun,z_curve(:,1));
+contact_point = find(abs(glass_ev) == min(abs(glass_ev)));
+
+
+
+%--------------------------------------------------------------------------
+% READ IN CURVE
+function [z_curve, curve_info] = read_in_curve(s_filename,visco)
+file_id = fopen(s_filename);
+% Since the header is somewhat variable, I have to read it line by line and
+% pick the lines I need, and I need to count the lines
+header_line = fgetl(file_id);
+j = 0; 
+while(header_line(1) == '#')
+    header_line = fgetl(file_id);
+    j = j+1;
+    ls = textscan(header_line,'%s');
+    lss = ls{1};
+    if (size(lss,1) == 1)
+        lss{2} = 'a';
+    end
+    switch lss{2}
+        case 'xPosition:'
+            curve_info(1) = str2double(lss{3});
+        case 'yPosition:'
+            curve_info(2) = str2double(lss{3});
+        case 'kLength:'
+            curve_info(3) = str2double(lss{3});
+        case 'columns:'
+            for (i=3:size(lss,1))
+                if strcmp(lss{i},'smoothedStrainGaugeHeight')
+                    z_in = i-2;
+                elseif strcmp(lss{i},'vDeflection')
+                    vd_in = i-2;
+                elseif strcmp(lss{i},'hDeflection')
+                    ld_in = i-2;
+                elseif strcmp(lss{i},'aux3')
+                    aux3_in = i-2;
+                elseif strcmp(lss{i},'aux4')
+                    aux4_in = i-2;
+                end
+            end
+        otherwise
+    end
+    
+end
+
+
+jj = 0;
+while(~isempty(header_line))
+    jj = jj+1;
+    ls = textscan(header_line,'%f');
+    temp_curve(:,jj) = ls{1};
+    header_line = fgetl(file_id);
+end
+fclose(file_id);
+
+
+temp_curve = temp_curve';
+
+z_curve = zeros(size(temp_curve,1),7);
+z_curve(:,1) = temp_curve(:,z_in);                      % Z-Position
+z_curve(:,2) = temp_curve(:,vd_in);                     % Vertical Deflection
+try
+z_curve(:,3) = temp_curve(:,ld_in);                     % Lateral Deflection
+catch
+end
+try
+z_curve(:,4) = temp_curve(:,aux3_in);                   % Aux3, Viscoelastic Amplitude
+z_curve(:,5) = temp_curve(:,aux4_in);                   % Aux4, Viscoelastic Phase
+catch 
+end
+z_curve = ad_correct(z_curve);                          % Correct for AD-Imperfections
+
+if visco(1)
+    %                                                 %CVD
+    z_curve(:,4) = z_curve(:,4) * visco(3) * 0.893;   %pow      % LI-Amp * Input attenuator 10k/(100+10)k
+    z_curve(:,5) = z_curve(:,5) * pi;                 %phas     % Into rad
+    z_curve(:,6) = z_curve(:,4).* cos(z_curve(:,5));  %real     % Into complex deflection, real part
+    z_curve(:,7) = z_curve(:,4).* sin(z_curve(:,5));  %imag     % Into complex deflection, imag part
+end
+
+
+
+
+
+%--------------------------------------------------------------------------
+% - CONTROLLER-BOX correction Factor
+function [z_curve] = ad_correct(z_curve)
+%      if (dopt)          /* old measurements */
+%         {      /* valid until April 13th 06 */
+%         *vd_v-=         0 +     -8760*z_m +  8.841E8*z_m*z_m + -1.632E13*z_m*z_m*z_m;   
+%         *hd_v-=         0 +      6184*z_m + -5.904E8*z_m*z_m +  1.069E13*z_m*z_m*z_m;   
+%         *cvd_PO-=  9.70E-2 +     -7264*z_m; 
+%         *cvd_PH-= -6.21E-3 +      -284*z_m;
+%         }
+%     else 
+%   /* valid since April 13th 06 - Goldcanti - 0.32 40N/m 10mV Durchhang statt 30@0.0,    1.0 Goldi */
+%        fac = .5;      
+% VD        
+%z_curve(:,2) = z_curve(:,2) - (z_curve(:,1) *  -4.04553E3 +  z_curve(:,1).*z_curve(:,1)*5.09683E8);
+
+%       /* *vd_v-= fac * (        0 +    -19977*z_m +  1.306674E9*z_m*z_m + 5.9222E13*z_m*z_m*z_m + -3.247E18*z_m*z_m*z_m*z_m);   */
+z_curve(:,2) = z_curve(:,2) - 0.5 *( (-19977 * z_curve(:,1)) +  (1.306674E9 .*z_curve(:,1).*z_curve(:,1)) + ...
+    (5.9222E13 * z_curve(:,1).*z_curve(:,1).*z_curve(:,1)) + (-3.247E18 .*z_curve(:,1).*z_curve(:,1).*z_curve(:,1).*z_curve(:,1)));
+
+% LD
+z_curve(:,3) = z_curve(:,3) - 0.5 * (z_curve(:,1)*28487 + z_curve(:,1).*z_curve(:,1)*(-1.58112E9) +  z_curve(:,1).*z_curve(:,1).*z_curve(:,1)*2.6630E13);   
+
+% Aux3 + Aux4 (as Amplitude and Phase)
+z_curve(:,4) = z_curve(:,4) - 0.5 * (0.00855 +   z_curve(:,1)*(-2115.1) + z_curve(:,1).*z_curve(:,1)*(2.59888E8) + z_curve(:,1).*z_curve(:,1).*z_curve(:,1)*( -1.0275E13));
+z_curve(:,5) = z_curve(:,5) - 0.5 * (0.00355 +   z_curve(:,1)*(-0.1177) + z_curve(:,1).*z_curve(:,1)* 301819 + z_curve(:,1).*z_curve(:,1).*z_curve(:,1)*(-6.29769E9));
+  
+
+
+
+%--------------------------------------------------------------------------
+% - SAVE temp File
+function save_temp_file(z_curve, z_force_curve, z_indentation_curve, model_curves, ...
+    k_means, k_errors, contact_point, cell_height, ind_range, sensy, k_tip,...
+    cp_thresh, r_tip, z_cell_info)
+% I will save in one file the complete curves, and in a second file just
+% the cell_height and k_means
+global save_folder
+global data_list
+global curve_no
+global temp_data
+
+z_cell_info(1) = z_cell_info(1)*1E6;            % save as um
+z_cell_info(2) = z_cell_info(2)*1E6;            %save as um
+cell_height = cell_height*1E9;                  % save as nm
+save_name = data_list(curve_no).name;
+save_name = strrep(save_name,'out','evl');
+sf_id = fopen([save_folder,'\temp_file.evl'],'w');
+
+fprintf(sf_id,'Sensitivity (nm/V) \t %5.0f \r\n',sensy*1E9);
+fprintf(sf_id,'K Tip (mN/m) \t %5.0f \r\n',k_tip*1E3);
+fprintf(sf_id,'R Tip (um) \t %5.0f \r\n',r_tip*1E6);
+fprintf(sf_id,'Indentation Range \t %5.0f \t %5.0f \r\n',ind_range(1),ind_range(2));
+fprintf(sf_id,'Position X Y \t %5.0f \t %5.0f \r\n',z_cell_info(1),z_cell_info(2));
+fprintf(sf_id,'Scan Length \t %5.0f \r\n',z_cell_info(3));
+fprintf(sf_id,'CP thresh \t %5.0f \r\n',cp_thresh*1E5);
+
+fprintf(sf_id,'Contact Point \t %5.0f \r\n',contact_point);
+fprintf(sf_id,'Cell height (nm) \t %5.0f \r\n',cell_height);
+
+fprintf(sf_id,'K Hertz \t %5.2f \t %5.2f \r\n',k_means(1),k_errors(1));
+fprintf(sf_id,'K Chen0.0 \t %5.2f \t %5.2f \r\n',k_means(2),k_errors(2));
+fprintf(sf_id,'K Chen0.1 \t %5.2f \t %5.2f \r\n',k_means(3),k_errors(3));
+fprintf(sf_id,'K Chen0.2 \t %5.2f \t %5.2f \r\n',k_means(4),k_errors(4));
+fprintf(sf_id,'K Chen0.3 \t %5.2f \t %5.2f \r\n',k_means(5),k_errors(5));
+fprintf(sf_id,'K Chen0.4 \t %5.2f \t %5.2f \r\n',k_means(6),k_errors(6));
+fprintf(sf_id,'K Chen0.5 \t %5.2f \t %5.2f \r\n',k_means(7),k_errors(7));
+fprintf(sf_id,'K Tu \t %5.2f \t %5.2f \r\n',k_means(8),k_errors(8));
+fprintf(sf_id,'Height \t vDeflection \t lDef \t ViscoAmp \t ViscoPhase \t ViscoReal \t ViscoImag \t Force \t Indentation \t Hertz \t Chen0 \t Chen1 \t Chen2 \t Chen3 \t Chen4 \t Chen5 \t Tu \r\n');
+fclose(sf_id);
+
+model_curves = cell2mat(model_curves);
+dlmwrite([save_folder,'\temp_file.evl'], [z_curve, z_force_curve, z_indentation_curve, model_curves], '-append','delimiter','\t','newline','pc');
+
+% this is the stuff that gets into an extra summary file.
+temp_data{1} = save_name;
+temp_data{2} = k_means;
+temp_data{3} = k_errors;
+temp_data{4} = cell_height;                 
+temp_data{5} = z_cell_info;
+temp_data{6} = ind_range;
+
+
+
+%--------------------------------------------------------------------------
+%--------------------------------------------------------------------------
+% - FILE HANDLING ETC. 
+
+
+%--------------------------------------------------------------------------
+% - GOOD CURVE, save, mark as good and move on
+function b_good_Callback(hObject, eventdata, handles)
+global data_folder
+global save_folder
+global temp_data
+global data_list
+global curve_no
+global z_curve
+global z_curve_info
+global visco
+
+% Turn Temp-File into permanent file
+movefile([save_folder,'\temp_file.evl'],[save_folder,'\',temp_data{1}]);
+
+% Save into Summary file
+%dlmwrite([save_folder,'\summary.txt'],cell2mat(temp_data(2:6),'-append','delimiter','\t','newline','pc');
+sumf_id = fopen([save_folder,'\summary.txt'],'a');
+fprintf(sumf_id,'%s', temp_data{1});
+fprintf(sumf_id,'\t %5.2f', cell2mat(temp_data(2:6)));
+fprintf(sumf_id,'\r\n');
+fclose(sumf_id);
+
+% Move on
+if curve_no < size(data_list,1);
+curve_no = curve_no + 1;
+else
+    disp('Last curve!');
+end
+[z_curve,z_curve_info] = read_in_curve([data_folder,'\',data_list(curve_no).name],visco);
+axes(handles.a_axes);
+plot(z_curve(:,1),z_curve(:,2));
+set(handles.e_cur_curve,'string',[data_folder,'\',data_list(curve_no).name]);
+b_analyse_Callback(hObject, eventdata, handles);
+
+
+%--------------------------------------------------------------------------
+% - BAD CURVE, save, mark as bad, move on
+function b_bad_Callback(hObject, eventdata, handles)
+global data_folder
+global save_folder
+global data_list
+global curve_no
+global z_curve
+global z_curve_info
+global temp_data
+global visco
+
+% Turn Temp-File into permanent file
+movefile([save_folder,'\temp_file.evl'],[save_folder,'\bad_',temp_data{1}]);
+
+if curve_no < size(data_list,1);
+curve_no = curve_no + 1;
+else
+    disp('Last curve!');
+end
+[z_curve,z_curve_info] = read_in_curve([data_folder,'\',data_list(curve_no).name],visco);
+axes(handles.a_axes);
+plot(z_curve(:,1),z_curve(:,2));
+set(handles.e_cur_curve,'string',[data_folder,'\',data_list(curve_no).name]);
+b_analyse_Callback(hObject, eventdata, handles);
+
+
+%--------------------------------------------------------------------------
+% - NEXT CURVE
+function b_next_curve_Callback(hObject, eventdata, handles)
+global data_folder
+global data_list
+global curve_no
+global z_curve
+global z_curve_info
+global visco
+
+if curve_no < size(data_list,1);
+curve_no = curve_no + 1;
+else
+    disp('Last curve!');
+end
+[z_curve,z_curve_info] = read_in_curve([data_folder,'\',data_list(curve_no).name],visco);
+axes(handles.a_axes);
+plot(z_curve(:,1),z_curve(:,2));
+set(handles.e_cur_curve,'string',[data_folder,'\',data_list(curve_no).name]);
+b_analyse_Callback(hObject, eventdata, handles);
+
+
+%--------------------------------------------------------------------------
+% - PREVious CURVE
+function b_prev_curve_Callback(hObject, eventdata, handles)
+global data_folder
+global data_list
+global curve_no
+global z_curve
+global z_curve_info
+global visco
+
+if curve_no > 1;
+curve_no = curve_no - 1;
+else
+    disp('First curve!');
+end
+[z_curve,z_curve_info] = read_in_curve([data_folder,'\',data_list(curve_no).name],visco);
+axes(handles.a_axes);
+plot(z_curve(:,1),z_curve(:,2));
+set(handles.e_cur_curve,'string',[data_folder,'\',data_list(curve_no).name]);
+b_analyse_Callback(hObject, eventdata, handles);
+
+
+%--------------------------------------------------------------------------
+% - READ PARAMETERS from GUI
+function [k_tip, sensy, r_tip, ind_range, cp_thresh, visco] = read_GUI(handles);
+k_tip = str2double(get(handles.e_ktip,'string'));
+k_tip = k_tip / 1000; % convert from mN to N;
+sensy = str2double(get(handles.e_sensy,'string'));
+sensy = sensy / 1E9; % convert from nm/V to m/V;
+r_tip = str2double(get(handles.e_rtip,'string'));
+r_tip = r_tip / 1000000; % convert from um to m
+ind_range(1) = str2double(get(handles.e_range_start,'string'));
+ind_range(2) = str2double(get(handles.e_range_end,'string'));
+cp_thresh = str2double(get(handles.e_cp_thresh,'string'));
+cp_thresh = cp_thresh / 100000;
+visco(1) = get(handles.e_visco,'Value');
+visco(2) = str2double(get(handles.e_freq,'string'));
+visco(3) = str2double(get(handles.e_amp,'string'));
+
+
+%--------------------------------------------------------------------------
+% - SELECT GLASS-Curves for Subtrate plane 
+function b_get_glass_Callback(hObject, eventdata, handles)
+global data_folder
+global glass_curves
+
+[k_tip, sensy, r_tip, ind_range, cp_thresh, visco] = read_GUI(handles);
+
+glass_curves = uipickfiles('FilterSpec',[data_folder,'\*.out'],'NumFiles',3);
+
+set(handles.e_glass_1,'string',glass_curves{1});
+set(handles.e_glass_2,'string',glass_curves{2});
+set(handles.e_glass_3,'string',glass_curves{3});
+cp_thresh = str2double(get(handles.e_cp_thresh,'string'));
+cp_thresh = cp_thresh / 100000;
+[g1,g2,g3,cp1,cp2,cp3,gf1,gf2,gf3] = get_substrate_tilt(cp_thresh,visco, sensy);
+
+% GC1
+axes(handles.a_axes);
+cla
+hold on;
+plot(g1(:,1),g1(:,2),'k');
+plot(gf1,'b');
+plot(g1(cp1,1),0,'xr','MarkerSize',12);
+set(gca,'YGrid','on');
+set(gca,'YLim',[-0.1,max(g1(:,2))]);
+legend('GC1');
+hold off;
+
+% GC2
+axes(handles.a_axes2);
+cla
+hold on;
+plot(g2(:,1),g2(:,2),'k');
+plot(gf2,'b');
+plot(g2(cp2,1),0,'xr','MarkerSize',12);
+set(gca,'YGrid','on');
+set(gca,'YLim',[-0.1,max(g2(:,2))]);
+legend('GC2');
+hold off;
+
+% GC3
+axes(handles.a_axes3);
+cla
+hold on;
+plot(g3(:,1),g3(:,2),'k');
+plot(gf3,'b');
+plot(g3(cp3,1),0,'xr','MarkerSize',12);
+set(gca,'YGrid','on');
+set(gca,'YLim',[-0.1,max(g3(:,2))]);
+legend('GC3');
+hold off;
+
+
+
+
+%--------------------------------------------------------------------------
+% - SET different SAVE FOLDER
+function b_save_folder_Callback(hObject, eventdata, handles)
+global save_folder
+
+temp_folder = uigetdir(save_folder);
+if (temp_folder ~= 0)
+    save_folder = temp_folder;
+end
+
+
+
+
+
+
+%--------------------------------------------------------------------------
+%--------------------------------------------------------------------------
+%--------------------------------------------------------------------------
+%--------------------------------------------------------------------------
+
+
+function e_data_folder_Callback(hObject, eventdata, handles)
+function e_data_folder_CreateFcn(hObject, eventdata, handles)
+
+function e_ktip_Callback(hObject, eventdata, handles)
+function e_ktip_CreateFcn(hObject, eventdata, handles)
+
+function e_sensy_Callback(hObject, eventdata, handles)
+function e_sensy_CreateFcn(hObject, eventdata, handles)
+
+function e_rtip_Callback(hObject, eventdata, handles)
+function e_rtip_CreateFcn(hObject, eventdata, handles)
+
+function e_range_start_Callback(hObject, eventdata, handles)
+function e_range_start_CreateFcn(hObject, eventdata, handles)
+
+function e_range_end_Callback(hObject, eventdata, handles)
+function e_range_end_CreateFcn(hObject, eventdata, handles)
+
+function e_cp_thresh_Callback(hObject, eventdata, handles)
+function e_cp_thresh_CreateFcn(hObject, eventdata, handles)
+
+function e_glass_1_Callback(hObject, eventdata, handles)
+function e_glass_1_CreateFcn(hObject, eventdata, handles)
+
+function e_glass_2_Callback(hObject, eventdata, handles)
+function e_glass_2_CreateFcn(hObject, eventdata, handles)
+
+function e_glass_3_Callback(hObject, eventdata, handles)
+function e_glass_3_CreateFcn(hObject, eventdata, handles)
+
+function e_save_folder_Callback(hObject, eventdata, handles)
+function e_save_folder_CreateFcn(hObject, eventdata, handles)
+
+function e_contact_point_Callback(hObject, eventdata, handles)
+function e_contact_point_CreateFcn(hObject, eventdata, handles)
+
+function e_k_hertz_Callback(hObject, eventdata, handles)
+function e_k_hertz_CreateFcn(hObject, eventdata, handles)
+
+function e_k_c0_Callback(hObject, eventdata, handles)
+function e_k_c0_CreateFcn(hObject, eventdata, handles)
+
+function e_k_c1_Callback(hObject, eventdata, handles)
+function e_k_c1_CreateFcn(hObject, eventdata, handles)
+
+function e_k_c2_Callback(hObject, eventdata, handles)
+function e_k_c2_CreateFcn(hObject, eventdata, handles)
+
+function e_k_c3_Callback(hObject, eventdata, handles)
+function e_k_c3_CreateFcn(hObject, eventdata, handles)
+
+function e_k_c4_Callback(hObject, eventdata, handles)
+function e_k_c4_CreateFcn(hObject, eventdata, handles)
+
+function e_k_c5_Callback(hObject, eventdata, handles)
+function e_k_c5_CreateFcn(hObject, eventdata, handles)
+
+function e_k_tu_Callback(hObject, eventdata, handles)
+function e_k_tu_CreateFcn(hObject, eventdata, handles)
+
+function e_e_hertz_Callback(hObject, eventdata, handles)
+function e_e_hertz_CreateFcn(hObject, eventdata, handles)
+
+function e_e_c0_Callback(hObject, eventdata, handles)
+function e_e_c0_CreateFcn(hObject, eventdata, handles)
+
+function e_e_c1_Callback(hObject, eventdata, handles)
+function e_e_c1_CreateFcn(hObject, eventdata, handles)
+
+function e_e_c2_Callback(hObject, eventdata, handles)
+function e_e_c2_CreateFcn(hObject, eventdata, handles)
+
+function e_e_c3_Callback(hObject, eventdata, handles)
+function e_e_c3_CreateFcn(hObject, eventdata, handles)
+
+function e_e_c4_Callback(hObject, eventdata, handles)
+function e_e_c4_CreateFcn(hObject, eventdata, handles)
+
+function e_e_c5_Callback(hObject, eventdata, handles)
+function e_e_c5_CreateFcn(hObject, eventdata, handles)
+
+function e_e_tu_Callback(hObject, eventdata, handles)
+function e_e_tu_CreateFcn(hObject, eventdata, handles)
+
+function e_cell_height_Callback(hObject, eventdata, handles)
+function e_cell_height_CreateFcn(hObject, eventdata, handles)
+
+
+function e_man_cp_Callback(hObject, eventdata, handles)
+
+
+function e_man_cp_CreateFcn(hObject, eventdata, handles)
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+function e_visco_Callback(hObject, eventdata, handles)
+
+
+function e_freq_Callback(hObject, eventdata, handles)
+
+
+function e_freq_CreateFcn(hObject, eventdata, handles)
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+function e_amp_Callback(hObject, eventdata, handles)
+
+
+function e_amp_CreateFcn(hObject, eventdata, handles)
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+function e_man_ch_Callback(hObject, eventdata, handles)
+
+
+function e_man_ch_CreateFcn(hObject, eventdata, handles)
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+function e_cur_curve_Callback(hObject, eventdata, handles)
+
+
+function e_cur_curve_CreateFcn(hObject, eventdata, handles)
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function e_range_act_start_Callback(hObject, eventdata, handles)
+% hObject    handle to e_range_act_start (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of e_range_act_start as text
+%        str2double(get(hObject,'String')) returns contents of e_range_act_start as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function e_range_act_start_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to e_range_act_start (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function e_range_act_end_Callback(hObject, eventdata, handles)
+% hObject    handle to e_range_act_end (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of e_range_act_end as text
+%        str2double(get(hObject,'String')) returns contents of e_range_act_end as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function e_range_act_end_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to e_range_act_end (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+function e_k_scale_max_Callback(hObject, eventdata, handles)
+
+
+function e_k_scale_max_CreateFcn(hObject, eventdata, handles)
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+function e_k_scale_min_Callback(hObject, eventdata, handles)
+
+
+function e_k_scale_min_CreateFcn(hObject, eventdata, handles)
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+

@@ -24,11 +24,21 @@ function [s]=temptest( str )
         disp('veuillez entrer un concentration en Arp et cp');
         m.arp = input('arp : ');
         m.cp = input('cp : ');
+        m.datafile=str;
         save(matfilepath,'-struct','m');
+        
     end
     
     s.setDatevec(m.annee,m.mois,m.jour,m.heures,m.minutes,m.secondes);
-    
+    for i=1:length(s);
+        s(i).metafile=matfilepath;
+        s(i).index=i;
+        if isfield(m,'submeta')
+            s(i).fitvalue=m.submeta(i).fitvalue;
+        end
+    end
+   
+%   s.datafile=[str];
     s.setArp(m.arp);
     s.setCp(m.cp);
 end

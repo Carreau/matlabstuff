@@ -67,6 +67,7 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
     %properties, ie actually store variables
     properties
         rawdata
+        index
         %traps position
         still_trap
         moving_trap
@@ -80,6 +81,7 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         % sliding two make an educated guess of the young modulus
         % and the touch distance over the contact of the two bead
         partialfit
+        metafile
     end
     %properties that are recalculed when accessed (ie depend on rawdata)
     properties(Dependent)
@@ -123,7 +125,40 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
     % ?
     % f0
     methods
-        %make the methode to guess E by timo's way
+        
+        function showfitTau(self)
+           for i = 1:length(self)
+                e = self(i).moving_trap.event.appr.stop;
+                ee = self(i).moving_trap.event.retr_start;
+                d =[0:ee-e]*1/self(i).rawdata.parameters.Sampling_rate.value;
+                f = [self(i).still_trap.force.r];
+                a = self(i).fitvalue.estimates.a;
+                b = self(i).fitvalue.estimates.b;
+                tau = self(i).fitvalue.estimates.tau;
+                fh = @(x)a*exp(-x./tau)+b;
+                figure(2);
+                clf;
+                hold on
+                plot(d,f(e:ee),'+');
+                hold on
+                plot(d,fh(d),'r+');
+           end
+        end
+        
+        function showfitYoung(self)
+           for i = 1:length(self)
+                e = self(i).moving_trap.event.appr.stop
+                d = [self(i).bead_distance];
+                f = [self(i).still_trap.force.r];
+                fh = @(x) youngHertz(x,self(i).fitvalue.d0,self(i).fitvalue.f0,self(i).fitvalue.E*1e-12,self(i).fitvalue.drift);
+                figure(1);
+                hold off
+                plot(d(1:e),f(1:e),'+');
+                hold on
+                plot(d(1:e),fh(d(1:e)),'r-');
+           end
+        end
+        %% make the methode to guess E by timo's way
         function ret = get.Etimo(self)
             for i = 1:length(self)
                if(size(self(i).fitvalue)== [0 0])
@@ -216,16 +251,17 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
                 Einit=1e-15;
                 f0init=0;
                 Starting = [dinit,Einit];
+                k=0;
                 for j=1:(n-1)*a
                     intv = (1+(j-1)*sb:1+(j-1)*sb+step);
                     [d0,E,err,flag] = yf(d(intv),f(intv),Starting);
                     if(flag)
-
+                        k=k+1;
                         Starting = [d0,E];
-                        s.partialfit.d0(j)    = d0;
-                        s.partialfit.E(j)     = E*1e12;
-                        s.partialfit.err(j)   = err*1E20;
-                        s.partialfit.d(j) = mean(d(intv));
+                        s.partialfit.d0(k)    = d0;
+                        s.partialfit.E(k)     = E*1e12;
+                        s.partialfit.err(k)   = err*1E20;
+                        s.partialfit.d(k) = mean(d(intv));
                     else
                         disp('max reach /////////');
                     end
@@ -246,6 +282,41 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
                 self(i).fitvalue.E   = E*1e12;
                 self(i).fitvalue.err = err*1E20;
                 self(i).fitvalue.drift = drift;
+                %% let's calculate the relaxation time
+                t0 = self(i).moving_trap.event.appr.stop;
+                t1 = self(i).moving_trap.event.retr_start;
+                d_t = self(i).still_trap.force.r(t0:t1);
+                %%
+                %d_t = [self(i).still_trap_force.tangent]';
+                %d_t=self(i).rawdata.d(self(i).rawdata.appr_stop:self(i).rawdata.retr_start);
+                %d_xxx=self(i).rawdata.d();
+                %plot(d_xxx,'+');
+                
+                %   1           -   
+                %    t_t=[0:length(d_t)-1]*1/self(i).rawdata.parameters.Effective_Sampling_Rate.value;
+                t_t=[0:length(d_t)-1]*1/self(i).rawdata.parameters.Sampling_rate.value;%average per trap ?    
+                start_point = [(d_t(1)-d_t(end)),d_t(end),t_t(end)/40];
+                %options=optimset('iter');
+                
+                [a,err] = fminsearch(@exp_dec, start_point,[],t_t,d_t);
+                figure(3);
+                hold off;
+                plot(t_t,d_t,'+');
+                hold on;
+                aa= @(x) a(1)*exp(-x./a(3))+a(2);
+                bb =@(x) arrayfun(aa,x);
+                plot(t_t,bb(t_t),'r','LineWidth',2);
+                self(i).fitvalue.estimates.a = a(1);
+                self(i).fitvalue.estimates.b = a(2);
+                self(i).fitvalue.estimates.tau = a(3);
+                self(i).fitvalue.estimates.err = err;
+                fprintf('fit %d/%d\n',i,length(self));
+                f= load(self(i).metafile);
+                f.submeta(self(i).index).fitvalue= self(i).fitvalue;
+                %disp 'save in' self(i).metafile;
+                save(self(i).metafile,'-struct','f');
+                clear f;
+                self(i).showfitTau;
            end
 
         end
@@ -283,6 +354,7 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         end
         %lazy accesor
         function x = applyfun(self,fun)
+            x=zeros(size(self));
             for i=1:length(self)
                 x(i) = fun(self(i));
             end
@@ -296,8 +368,10 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         end
         %lazy accessor copy past from previous: not good
         function f = get.still_trap_force(self)
-            f.x=squeeze(self.rawdata.f(1,1,:));
-            f.y=squeeze(self.rawdata.f(1,2,:));
+            %f.x=squeeze(self.rawdata.f(1,1,:));
+            %f.y=squeeze(self.rawdata.f(1,2,:));
+            f.x=self.still_trap.force.x;
+            f.y=self.still_trap.force.y;
             f.tangent=f.x*cos(self.approachAngle)+f.y*sin(self.approachAngle);
             f.perp   =-f.x*sin(self.approachAngle)+f.y*cos(self.approachAngle);
         end
@@ -335,4 +409,17 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
             t=datenum(self.rawdata.datevec-self.datevec_beggining)*24*60;
         end;
     end
+end
+
+function [sse, FittedCurve] =exp_dec(params,t,f)
+        %global eta2 fc
+        a = params(1);
+        b = params(2);
+        tau= params(3);
+        FittedCurve=a*exp(-t./tau)+b;
+        ErrorVector = (FittedCurve - f)./(f);
+        %ErrorVector = (FittedCurve - f).*(FittedCurve-b);
+        %ErrorVector = (FittedCurve - f)./(FittedCurve);
+        ErrorVector(isnan(ErrorVector))=[];
+        sse = abs(sum(abs(ErrorVector) .^ 2))*1e10;
 end
