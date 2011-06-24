@@ -24,8 +24,8 @@ in=[366 283 255 0 0];
 pos = find(in(:,3)==255);
 
 % on a donc la posion initiale du piège actif
-x_o = cal(3)*(in(pos,1)-cal(1));
-y_o=  cal(4)*(in(pos,2)-cal(2));
+%x_o = cal(3)*(in(pos,1)-cal(1));
+%y_o=  cal(4)*(in(pos,2)-cal(2));
 
 
 %ici on a le voltage du piège actif
@@ -33,45 +33,45 @@ aom_t = in(pos,4);
 clear in pos
 
 %ici on calcul le déplacement du piège 
-dx = cal(5)*d/1000;
-dy = cal(6)*d/1000;
-clear cal
+%dx = cal(5)*d/1000;
+%dy = cal(6)*d/1000;
+%clear cal
 
 % on calcul le nombre du point du scan dans chaqu direction
     
-n_st_x = round(scan_width(1)*1000/d);
-n_st_y = round(scan_width(2)*1000/d);
-clear scan_width d
+%n_st_x = round(scan_width(1)*1000/d);
+%n_st_y = round(scan_width(2)*1000/d);
+%clear scan_width d
 
 % on calcul les futurs positions du pièges
-x_s = x_o+[-n_st_x:n_st_x]*dx;
-y_s = y_o+[-n_st_y:n_st_y]*dy;
-clear dx dy n_st_x n_st_y
+%x_s = x_o+[-n_st_x:n_st_x]*dx;
+%y_s = y_o+[-n_st_y:n_st_y]*dy;
+%clear dx dy n_st_x n_st_y
 
 % on les intercales de 'zeros' en concatainant verticalemetn, puis reshape
-x_t(1,:)=x_s;
-x_t(2:tr+1,:) = x_o*ones(tr,length(x_s));
-y_t(1,:)=y_s;
-y_t(2:tr+1,:) = y_o*ones(tr,length(y_s));
+%x_t(1,:)=x_s;
+%x_t(2:tr+1,:) = x_o*ones(tr,length(x_s));
+%y_t(1,:)=y_s;
+%y_t(2:tr+1,:) = y_o*ones(tr,length(y_s));
 
-clear x_s y_s tr
+%clear x_s y_s tr
 
-x_i = reshape(x_t,1,size(x_t,1)*size(x_t,2));
-y_i = reshape(y_t,1,size(y_t,1)*size(y_t,2));
-clear x_t y_t
+%x_i = reshape(x_t,1,size(x_t,1)*size(x_t,2));
+%y_i = reshape(y_t,1,size(y_t,1)*size(y_t,2));
+%clear x_t y_t
 
 % we add 'zeros' at the beggining and the end
-x_f = [x_i ones(1,length(y_i))*x_o];
-y_f = [ones(1,length(x_i))*y_o y_i];
-clear x_i y_i
+%x_f = [x_i ones(1,length(y_i))*x_o];
+%y_f = [ones(1,length(x_i))*y_o y_i];
+%clear x_i y_i
 
 % and ofset it
-x_f = [ ones(1,o)*x_o x_f];
-y_f = [ ones(1,o)*y_o y_f];
+%x_f = [ ones(1,o)*x_o x_f];
+%y_f = [ ones(1,o)*y_o y_f];
 
-clear x_o y_o o
+%clear x_o y_o o
 % create an array with the power.
-a_f = aom_t*ones(1,length(x_f));
+%a_f = aom_t*ones(1,length(x_f));
 
 %
 
