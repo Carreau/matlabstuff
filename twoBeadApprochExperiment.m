@@ -147,14 +147,14 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
         
         function showfitYoung(self)
            for i = 1:length(self)
-                e = self(i).moving_trap.event.appr.stop
+                e = self(i).moving_trap.event.appr.stop;
                 d = [self(i).bead_distance];
                 f = [self(i).still_trap.force.r];
                 fh = @(x) youngHertz(x,self(i).fitvalue.d0,self(i).fitvalue.f0,self(i).fitvalue.E*1e-12,self(i).fitvalue.drift);
                 figure(1);
-                hold off
+                hold off;
                 plot(d(1:e),f(1:e),'+');
-                hold on
+                hold on;
                 plot(d(1:e),fh(d(1:e)),'r-');
            end
         end
@@ -180,9 +180,20 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
                a=self(i).still_trap.force.r(touchevent:stop);
                b= self(i).bead_distance(touchevent:stop);
                ret = re(a,b);
+
                hold on;
-               plot(b(1000:end)/d00,ret(1000:end),'r.');
-               errorbar(4.5/d00,0,1e-12,'r');
+               b= b(1000:end);
+               ret=ret(1000:end);
+               w= (ret/d00>0);
+
+               b=b(w);
+               ret=ret(w);
+               step=30;
+
+
+               %plot(b(1:step:end)/d00,ret(1:step:end),'g.');
+               %errorbar(4.5/d00,0,1e-12,'r');
+               ret = [a b];
             end
         end
         %set the capting proteine concentration
@@ -272,10 +283,10 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
            for i=1:length(self)
                 f = self(i).still_trap.force.r(1:self(i).moving_trap.event.appr.stop);
                 d = self(i).bead_distance     (1:self(i).moving_trap.event.appr.stop);
-                %l=length(f);
-                %n=50;
-                %f0 = f(1:floor(l/n):end);
-                %d0 = d(1:floor(l/n):end);
+                l=length(f);
+                n=50;
+                f0 = f(1:floor(l/n):end);
+                d0 = d(1:floor(l/n):end);
                 [d0,f0,E,err,drift] = youngfit(d,f);
                 self(i).fitvalue.d0  = d0;
                 self(i).fitvalue.f0  = f0;
@@ -287,10 +298,13 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
                 t1 = self(i).moving_trap.event.retr_start;
                 d_t = self(i).still_trap.force.r(t0:t1);
                 %%
-                %d_t = [self(i).still_trap_force.tangent]';
-                %d_t=self(i).rawdata.d(self(i).rawdata.appr_stop:self(i).rawdata.retr_start);
-                %d_xxx=self(i).rawdata.d();
-                %plot(d_xxx,'+');
+                d_t = [self(i).still_trap_force.tangent]';
+                d_t=self(i).rawdata.d(self(i).rawdata.appr_stop:self(i).rawdata.retr_start);
+                d_xxx=self(i).rawdata.d();
+                
+                figure(4)
+                plot(d_xxx,'+');
+                title('distance, time');
                 
                 %   1           -   
                 %    t_t=[0:length(d_t)-1]*1/self(i).rawdata.parameters.Effective_Sampling_Rate.value;
@@ -316,7 +330,7 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
                 %disp 'save in' self(i).metafile;
                 save(self(i).metafile,'-struct','f');
                 clear f;
-                self(i).showfitTau;
+                %self(i).showfitTau;
            end
 
         end
