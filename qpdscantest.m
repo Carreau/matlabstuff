@@ -21,6 +21,7 @@ in=[366 283 255 0 0];
 %
 % on cherche le piège actif
 % pos est donc le numero du piège actif
+save('D:\temp\matthias\test_qpd_parameters')
 pos = find(in(:,3)==255);
 
 % on a donc la posion initiale du piège actif
@@ -36,7 +37,7 @@ clear in pos
 %dx = cal(5)*d/1000;
 %dy = cal(6)*d/1000;
 %clear cal
-
+s
 % on calcul le nombre du point du scan dans chaqu direction
     
 %n_st_x = round(scan_width(1)*1000/d);
