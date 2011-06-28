@@ -1,6 +1,7 @@
 classdef trap < handle 
     properties
         kappa       %x et y
+        corrected_kappa = false % bool, which return corrected kappa if asked
         pos_aod         %x et y
         slopes      %x et y
         % lin_binnig add a variable to return the results linbinned by a
@@ -40,6 +41,14 @@ classdef trap < handle
     
     methods
         %let's do a kappa rescaled by QPD sum
+        function ret=get.kappa(self)
+            if self.corrected_kappa == true
+                disp('warning : not implemented yet')
+                ret=self.kappa;
+            else
+                ret=self.kappa;
+            end
+        end
         function ret = get.auto_kappa(self)
             % i'll use 30_mars_50cp_25apr.mat as reference
             % is 
