@@ -16,7 +16,7 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
     % STATIC DATA STRUCTURE
     %      rawdata
     %      still_trap  -> structure to acces info about the still trap
-    %      movong_trap -> structure to acces info about the movong trap
+    %      moving_trap -> structure to acces info about the movong trap
     %            cf trap.m
     %      datevec_beggining -> datevec of actin mix, use to caculate time_m
     %      fTouchDetection -> not Used anymore, keep for compatibility
