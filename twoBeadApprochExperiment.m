@@ -316,6 +316,9 @@ classdef (ConstructOnLoad) twoBeadApprochExperiment < handle
                 figure(3);
                 hold off;
                 plot(t_t,d_t,'+');
+                title('décroissance de la force lors du repos des pièges.')
+                xlabel('temps');
+                ylabel('force');
                 hold on;
                 aa= @(x) a(1)*exp(-x./a(3))+a(2);
                 bb =@(x) arrayfun(aa,x);
