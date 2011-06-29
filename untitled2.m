@@ -1,13 +1,46 @@
 %% load data
+clear
 g =    temptest('30_mars_10cp_25apr.mat');
 %g = [g temptest('30_mars_30cp_25apr.mat')];
 %g = [g temptest('30_mars_50cp_25apr.mat')];
 %g = [g temptest('8mars25Arp50cp.mat')];
-%g = [g temptest('8mars25arp00cp.mat')];
-%g = [g temptest('run1_1-mars-2011_25arp-10cp.mat')];
-%g = [g temptest('run3_1-mars-2011_25arp-30cp.mat')];
-%g = [g temptest('run4_1-mars-2011_25arp-30cp.mat')];
+g = [g temptest('8mars25arp00cp.mat')];
+g = [g temptest('run1_1-mars-2011_25arp-10cp.mat')];
+g = [g temptest('run3_1-mars-2011_25arp-30cp.mat')];
+g = [g temptest('run4_1-mars-2011_25arp-30cp.mat')];
 
+%%
+
+%% fit linéaire des courbes loglog
+i=4;
+f=g(i).still_trap.force.r;
+d=g(i).bead_distance;
+step=150;
+y=f(1:step:e);
+x=d(1:step:e);
+step=2;
+xp=x(end/4:end);
+yp=y(end/4:end);
+
+xpl=log(xp);
+ypl=log(yp);
+
+p=polyfit(xpl,ypl,1);
+clf 
+loglog(x(end/4:2*step:end),y(end/4:2*step:end),'b+')
+hold on;
+loglog(x(1:step:end/4),y(1:step:end/4),'r+');
+loglog(xp(1:step:end),exp(polyval(p,xpl(1:step:end))),'-g');
+q2=-21;
+%p(2)
+q=[-2 q2];
+r=[-1.5 -22];
+loglog(xp(1:step:end),exp(polyval(q,xpl(1:step:end))),'--k')
+loglog(xp(1:step:end),exp(polyval(r,xpl(1:step:end))),'--y')
+%ylim([0.0004    1.0000]*1e-10)
+xlim([6 39])
+xlabel('log(distance)')
+ylabel('log(Force)')
 %%
 i=0;
 
@@ -17,7 +50,7 @@ s.moy.x=[];
 m.moy.x=[];
 s.ecr.x=[];
 m.ecr.x=[];
-s.moy.y=[];
+s.moy.y=[]
 m.moy.y=[];
 s.ecr.y=[];
 m.ecr.y=[];
@@ -32,7 +65,6 @@ clear f;
 tic;
 parfor i=1:length(g)
 	%figure(1);
-	
 	
 	mtx=[g(i).moving_trap.bead_pos_in_trap.x];
 	stx=[g(i).still_trap.bead_pos_in_trap.x];
@@ -224,23 +256,23 @@ clf;
 i=1;
 ldh0=0;
 leh0=0;
-for i=-10:10
+for i=1
     
 	Ehair=[];
 	Dhair=[];
-	%exp=f(i);
+	exp=f
 	start=1;
-	%stop = exp.moving_trap.event.appr.stop;
-	%d= exp.bead_distance(start:stop);
-	%force= abs(exp.still_trap_force.tangent(start:stop));
-    d=[10:-0.001:1.3];
-    fc=@(x) 1/(x-i/10)^2;
-    force = arrayfun(fc,d)+randn(size(d))/10;
-    d= d+randn(size(d))/10;
+	stop = exp.moving_trap.event.appr.stop;
+	d= exp.bead_distance(start:stop);
+	force= abs(exp.still_trap_force.tangent(start:stop));
+    %d=[10:-0.001:1.3];
+    %fc=@(x) 1/(x-i/10)^2;
+    %force = arrayfun(fc,d)+randn(size(d))/10;
+    %d= d+randn(size(d))/10;
     start = 1;
     stop = length(d);
     %
-	n=50;m=10;
+	n=450;m=50;
 	schunk=floor((stop-start)/n);
 	lchunk=m*schunk;
 	figure(3);
@@ -250,7 +282,7 @@ for i=-10:10
 	ppl=[];
     ldh0=0;
     
-	for j=1:(n-m)
+	for j=10:(n-m)
 		 tempdd = mean(d(j*schunk:j*schunk+lchunk));
 		 Dhair = [Dhair tempdd];
 		 deltad = d(j*schunk)-d(j*schunk+lchunk);
@@ -473,7 +505,9 @@ rescaledForce_a = [];
 rescaledDistance_a = [];
 dd_a = [];
 fmax_a =[];
-for i=1:length(g);
+u=length(g);
+for j=1:u;
+    i=1;
     exp   = g(i);
     start = exp.moving_trap.event.appr.start;
     stop  = exp.moving_trap.event.appr.stop;
@@ -509,7 +543,7 @@ for i=1:length(g);
     fprintf('\b\b\b\b\b\b\b%03d/%03d',i,length(g));
     rescaledDistance_a = [rescaledDistance_a rescaledDistance];
     rescaledForce_a = [rescaledForce_a rescaledForce];
-    
+    g(1)=[];
     clear demidistance demiforce demiindice maxforce maxindice maxdistance rescaledDistance 
     clear demimax i start stop force distance ans rescaledForce exp
 end
@@ -523,7 +557,7 @@ sortedDistance = sorted(1,:);
 sortedForce = sorted(2,:);
 
 %let's do packet of...
-n=70;
+n=100;
 dmax=max(sortedDistance(sortedDistance < 50));
 step = dmax/n;
 for i=1:n
@@ -534,8 +568,8 @@ for i=1:n
   stat.fstd(i) = std(   sortedForce(keep));
 end
 
-clear sorted sortedDistance step keep
-clear sortedForce dmax n
+%clear sorted sortedDistance step keep
+%clear sortedForce dmax n
 figure(1)
 clf;
 hold on;
