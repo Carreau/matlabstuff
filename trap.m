@@ -3,9 +3,11 @@ classdef trap < handle
         kappa       %x et y
         corrected_kappa = false % bool, which return corrected kappa if asked
         pos_aod         %x et y
+        cpos_aod
         slopes      %x et y
         % lin_binnig add a variable to return the results linbinned by a
         % certain amount
+        trapInterpolateur
         QPD_dx 
         QPD_dy
         QPD_sum
@@ -20,6 +22,7 @@ classdef trap < handle
         % event.retr.start
         %% methods posfixed with ld send lin_bined values, cf without nb
         %% for description 
+        
         event_lb
         bead_pos_in_trap_lb
         force_lb
@@ -29,7 +32,8 @@ classdef trap < handle
         
         %% 
         % event : store approch start, stop, and retr start
-        %           
+        %     
+        %kappa
         event
         bead_pos_in_trap    % in um 
         force               % x and y for now (should implement theta phi)
@@ -41,10 +45,44 @@ classdef trap < handle
     
     methods
         %let's do a kappa rescaled by QPD sum
+        function setkappa(self,value)
+            self.rkappa = value;
+        end
+        function ret=get.pos_aod(self)
+            if isempty(self.cpos_aod)
+                dig2noru=@(d)(((d/256)*500/2^23)-75)/15;
+                nor2digu= @(n) (((n*15+75)*2^23)/500+2^23)*256;
+                correctn2ds = @(x) dig2noru(nor2digu(x));
+                correctn2da = @(u)arrayfun(correctn2ds,u);
+                self.cpos_aod.x= correctn2da(self.pos_aod.x);
+                self.cpos_aod.y= correctn2da(self.pos_aod.y);
+            end
+            ret = self.cpos_aod;
+        end
+        function set.trapInterpolateur(self,q)
+            self.trapInterpolateur = trapPowerInterpolation(q);
+        end
+        function ret=ckappa(self)
+            if self.corrected_kappa
+                pf=self.trapInterpolateur.interpolatedPower(self.pos_aod.x(1),self.pos_aod.y(1));
+                ret.x=self.kappa.x*pf;
+                ret.y=self.kappa.y*pf;
+            else
+                ret = self.kappa;
+            end
+        end
+        function ret=cslopes(self)
+            if self.corrected_kappa
+                pf=self.trapInterpolateur.interpolatedPower(self.pos_aod.x(1),0*self.pos_aod.y(1));
+                ret.x=self.slopes.x*pf;
+                ret.y=self.slopes.y*pf;
+            else
+                ret = self.slopes;
+            end
+        end
         function ret=get.kappa(self)
-            if self.corrected_kappa == true
-                disp('warning : not implemented yet')
-                ret=self.kappa;
+            if self.corrected_kappa == true 
+                ret=self.ckappa;
             else
                 ret=self.kappa;
             end
