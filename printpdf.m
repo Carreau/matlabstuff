@@ -7,6 +7,6 @@ function printpdf(i,filename)
     
     strstr = sprintf('%s-%s',datestr(now,'YYYY-mmm-dd'),filename);
     print('-dpdf',strstr); % Place plot on figure
-    plot2svg([297,110],i);
+    %plot2svg([297,110],i);
 
 end

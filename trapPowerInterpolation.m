@@ -43,9 +43,38 @@ classdef (ConstructOnLoad) trapPowerInterpolation < handle
             end
         end
         function obj=trapPowerInterpolation(X,Y,Z)
+            if nargin == 1
+                q=X;
+                %cas où l'onpasse directemetn une structures des données
+                %raw enregistrées:
+                stp = 2/(q.grid_size-1);
+
+                data=q.data_r(:,1:end);
+                %xtrap   = data(1,:);
+                %ytrap   = data(2,:);
+                %aodpower= data(3,:);
+                %qpdx    = data(4,:);
+                %sigmax  = data(5,:);
+                %qpdy    = data(6,:);
+                %sigmay  = data(7,:);
+                %qpdsum  = data(8,:);
+                %sigmaqpdsum          = data(9,:);
+                powerphotodiode      = data(10,:);
+                %sigmapowerphotodiode = data(11,:);
+                
+                mpd = mean(reshape(powerphotodiode,q.number_of_point,[]));
+                inpower = mpd /max(mpd);
+
+                [X Y] = meshgrid(-1:stp:1,-1:stp:1);
+                Z=reshape(inpower,q.grid_size,[]);
+                
+                clear q mpd inpower stp;
+                
+            end
             obj.XMeshGrid=X;
             obj.YMeshGrid=Y;
             obj.ZMeshGrid=Z;
+            clear X Y Z;
         end
     end
 end

@@ -36,7 +36,7 @@ disp('done loading...');
 % forceoffset = rand(n,1)/500;
 
 n           = 50;
-noise       =      (  1/500          );
+noise       =      (  1/900          );
 klist       = rand(n,1);
 dlist       = 1  + ( 0.1*rand(n,1)    );
 dofset      =      ( 1+0.1*rand(n,1)  );
@@ -80,7 +80,7 @@ end
 % on va essayer de traiter toute les courbes de façon à avoir 
 % en (0,1) le point avec un maximum de force
 % et en (1/2) (1/2) le point avec le maximum de force sur 2
-fexposant   = 2.0;
+fexposant   = 1.0;
 texposant   = fexposant;
 
 %figure(2);
@@ -222,7 +222,8 @@ sortedDistance = sorted(1,:);
 sortedForce = sorted(2,:);
 
 %let's do packet of...
-n=100;
+n=50;
+clear stat
 dmax=max(sortedDistance(sortedDistance < 50));
 step = dmax/n;
 for i=1:n
@@ -242,7 +243,7 @@ hold on;
 errorbar(stat.d,stat.f,stat.fstd,'k'); 
 plot([1 1/frac^(1/fexposant)],[1 frac],'ro');
 
-%%
+%
 figure(3);
 clf
 range=1:30;

@@ -48,17 +48,17 @@ classdef trap < handle
         function setkappa(self,value)
             self.rkappa = value;
         end
-        function ret=get.pos_aod(self)
-            if isempty(self.cpos_aod)
-                dig2noru=@(d)(((d/256)*500/2^23)-75)/15;
-                nor2digu= @(n) (((n*15+75)*2^23)/500+2^23)*256;
-                correctn2ds = @(x) dig2noru(nor2digu(x));
-                correctn2da = @(u)arrayfun(correctn2ds,u);
-                self.cpos_aod.x= correctn2da(self.pos_aod.x);
-                self.cpos_aod.y= correctn2da(self.pos_aod.y);
-            end
-            ret = self.cpos_aod;
-        end
+%         function ret=get.pos_aod(self)
+%             if isempty(self.cpos_aod)
+%                 dig2noru=@(d)(((d/256)*500/2^23)-75)/15;
+%                 nor2digu= @(n) (((n*15+75)*2^23)/500+2^23)*256;
+%                 correctn2ds = @(x) dig2noru(nor2digu(x));
+%                 correctn2da = @(u)arrayfun(correctn2ds,u);
+%                 self.cpos_aod.x= correctn2da(self.pos_aod.x);
+%                 self.cpos_aod.y= correctn2da(self.pos_aod.y);
+%             end
+%             ret = self.cpos_aod;
+%         end
         function set.trapInterpolateur(self,q)
             self.trapInterpolateur = trapPowerInterpolation(q);
         end

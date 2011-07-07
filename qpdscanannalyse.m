@@ -8,9 +8,9 @@
 %grid_size=20;
 %number_of_point=10;
 %%
-stp = 2/(grid_size-1);
+stp = 2/(q.grid_size-1);
 
-data=data_r(:,1:end);
+data=q.data_r(:,1:end);
 xtrap   = data(1,:);
 ytrap   = data(2,:);
 aodpower= data(3,:);
@@ -29,8 +29,9 @@ sigmapowerphotodiode = data(11,:);
 
 %mx  = mean(reshape(dx,number_of_point,[]));
 %my  = mean(reshape(dy,number_of_point,[]));
-%ms  = mean(reshape(qpdsum,number_of_point,[]));
-mpd = mean(reshape(powerphotodiode,number_of_point,[]));
+ms  = mean(reshape(qpdsum,q.number_of_point,[]));
+rms = ms/max(ms);
+mpd = mean(reshape(powerphotodiode,q.number_of_point,[]));
 inpower = mpd /max(mpd);
 
 [X Y] = meshgrid(-1:stp:1,-1:stp:1);
@@ -56,13 +57,19 @@ inpower = mpd /max(mpd);
 % title('évolution de la puissance sur la PHOTODIODE en %');
 
 figure(11)
-Z=reshape(inpower,grid_size,[]);
+Z=reshape(inpower,q.grid_size,[]);
 %iz=interp2(Z);
 %ix=interp2(X);
 %iy=interp2(Y);
 [C,h] = contour(X,Y,Z,[0.8:0.02:1.0]);
-set(h,'ShowText','on','TextStep',get(h,'LevelStep')*2)
+set(h,'ShowText','on','TextStep',get(h,'LevelStep')*10)
 %colormap cool
+
+figure(12)
+ZZ=reshape(rms,q.grid_size,[]);
+%[C,h] = surf(X,Y,ZZ./Z,[0.8:0.02:1.0]);
+surf(X,Y,ZZ./Z)%,[0.8:0.02:1.0]);
+%set(h,'ShowText','on','TextStep',get(h,'LevelStep'))
 
 %clear mx my dx dy qpdx qpdy qpdsum
 
