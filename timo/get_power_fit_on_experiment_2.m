@@ -1,4 +1,4 @@
-function get_power_fit_on_experiment_2(struct,relaxed)
+function [fit_res]=get_power_fit_on_experiment_2(struct,relaxed)
 % if relaxed set to true, fit wont try to stay at d0 >0
 %
 eb = erasableBuffer;
@@ -49,7 +49,8 @@ m=struct;
 		fit_res(i).d=d;%#ok<AGROW>
 		fit_res(i).force=force;%#ok<AGROW>
         fit_res(i).raw=m(i);%#ok<AGROW>
-        fit_res(i).relaxed = relaxed;
+        fit_res(i).relaxed = relaxed;%#ok<AGROW>
+        fit_res(i).uuid    = m(i).UUID.toString();%#ok<AGROW>
 		%fit_res(i).cp=exp.cp;%#ok<AGROW>
 		%fit_res(i).arp=exp.arp;%#ok<AGROW>
         %fit_res(i).time_m=exp.time_m;%#ok<AGROW>
