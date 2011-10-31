@@ -1,0 +1,9 @@
+what can we do?
+
+1. go back to the raw data.
+
+Save all in a simple structure, f,t,f,d
+
+2. To get better and more reasonable results: average the time dependent data, and then plot as distance dependent...
+
+3. 

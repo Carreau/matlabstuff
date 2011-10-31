@@ -1,18 +1,15 @@
 %% chargement des donnée utilies
 clear
 g =    temptest('30_mars_10cp_25apr.mat');
-%g = [g temptest('30_mars_30cp_25apr.mat')];
-%g = [g temptest('30_mars_50cp_25apr.mat')];
-%g = [g temptest('8mars25Arp50cp.mat')];
-%g = [g temptest('8mars25arp00cp.mat')];
-%g = [g temptest('run1_1-mars-2011_25arp-10cp.mat')];
-%g = [g temptest('run3_1-mars-2011_25arp-30cp.mat')];
-%g = [g temptest('run4_1-mars-2011_25arp-30cp.mat')]; %#ok<NASGU>
+g = [g temptest('30_mars_30cp_25apr.mat')];
+g = [g temptest('30_mars_50cp_25apr.mat')];
+g = [g temptest('8mars25Arp50cp.mat')];
+g = [g temptest('8mars25arp00cp.mat')];
+g = [g temptest('run1_1-mars-2011_25arp-10cp.mat')];
+g = [g temptest('run3_1-mars-2011_25arp-30cp.mat')];
+g = [g temptest('run4_1-mars-2011_25arp-30cp.mat')]; %#ok<NASGU>
 
 disp('done loading...');
-%% polynome de rescaling
-
-
 
 
 %% generation de données arbitraire pour le rescaling.
@@ -34,18 +31,20 @@ disp('done loading...');
 % stoplist    = 3.0+1.5*rand(n,1);
 % startlist   = 55+3*rand(n,1);
 % forceoffset = rand(n,1)/500;
-
-n           = 50;
-noise       =      (  1/900          );
-klist       = rand(n,1);
-dlist       = 1  + ( 0.1*rand(n,1)    );
-dofset      =      ( 1+0.1*rand(n,1)  );
-stoplist    = 3  + ( 1.5*rand(n,1)    );
-startlist   = 25 + ( 25+3*rand(n,1)   );
-forceoffset =      0.5*( rand(n,1)/500    );
-% m==siMulation , t== Theoriquz, f== fit
+eb = erasableBuffer;
 mexposant   = 2.0;
 texposant   = mexposant;
+
+n           = 15;
+noise       =      1.0*( 1/900          );
+klist       = 1+   1.0*( rand(n,1)      );
+dlist       = 1  + 1.0*( 0.1*rand(n,1)    );
+dofset      =      1.0*( 1+0.1*rand(n,1)  );
+stoplist    = 3  + 1.0*( 1.5*rand(n,1)    );
+startlist   = 145 + 1.0*( 25+3*rand(n,1)   );
+forceoffset =      1.0*( rand(n,1)/(30*mexposant^2)    );
+% m==siMulation , t== Theoriquz, f== fit
+
 
 
 % data point generated every 'step' in distance
@@ -53,7 +52,7 @@ step=-0.005;
 
 figure(1)
 clf
-clc
+%clc
 title('generated curves')
 xlabel('distance');
 ylabel('force');
@@ -62,6 +61,7 @@ hold on;
 clear g;
 g=[];
 for i=1:n
+    eb.counter(i,n);
     bd=(startlist(i):step:stoplist(i));
     g(i).moving_trap.event.appr.start=1; %#ok<SAGROW>
     g(i).moving_trap.event.appr.stop=length(bd);%#ok<SAGROW>
@@ -77,6 +77,7 @@ end
 
 
 %% tetative rescaling
+eb = erasableBuffer;
 % on va essayer de traiter toute les courbes de façon à avoir 
 % en (0,1) le point avec un maximum de force
 % et en (1/2) (1/2) le point avec le maximum de force sur 2
@@ -101,14 +102,14 @@ cp_a    = zeros(u,1);
 %ofset du à l'épaiseur de la bille
 ofset=4.5;
 sstp=1;
-fprintf('\n000/%03d:(000/000)',u);
+eb.print(sprintf('000/%03d:(000/000)\n',u));
 keeped=0;
 throwed=0;
 interv=0.9:0.1:7;
 figure(2);
 clf
 hold on;
-frac=1/3;
+frac=5/10;
 upperlim = @(u) arrayfun(@(x) min(0.4./ (0.8*x-0.5)+0.3,1.2),u);
 lowerlim = @(u) arrayfun(@(x)   1./ x    -0.2,u);
 plot(interv,upperlim(interv),'r--');
@@ -117,7 +118,7 @@ plot([1 1/frac^(1/fexposant)],[1 frac],'go');
 mm=zeros(u,1);
 for j=1:u;
     i=j;
-    
+    eb.counter(j,u);
     exp   = g(i);
     start = exp.moving_trap.event.appr.start;
     stop  = exp.moving_trap.event.appr.stop;
@@ -180,10 +181,14 @@ for j=1:u;
     rescaledDistance = polyval(resacalingDistancePolynome,distance);
     rescaledForce    = (force/fmax);
     
+    % % % 
+    rescaledDistance=distance;
+    rescalesForce=force;
+    
     % on compense la remise à zero precédente
     %rescaledForce = rescaledForce+1/mean(rescaledDistance(1:end/20));
     
-    w=rescaledDistance > 20;
+    w=rescaledDistance > 70;
     rescaledDistance(w)=[];
     rescaledForce(w)=[];
     % let's remove the curve that really don't match.
@@ -204,7 +209,7 @@ for j=1:u;
         plot(rescaledDistance(1:sstp:end),rescaledForce(1:sstp:end),'r-');
     end
     
-    fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b%03d/%03d:(%03d/%03d)',i,length(g),keeped,throwed);
+    eb.print(sprintf('%03d/%03d:(%03d/%03d)',i,length(g),keeped,throwed))
     %g(1)=[];
     clear demidistance demiforce demiindice maxforce maxindice maxdistance rescaledDistance 
     clear demimax i start stop force distance ans rescaledForce exp
@@ -216,12 +221,64 @@ clear thro* u w* sstp quartmax
 % à trier
 tosort = [rescaledDistance_a;rescaledForce_a];
 sorted = sortrows(tosort',1)';
-clear tosort rescaledDistance_a rescaledForce_a;
+%clear tosort rescaledDistance_a rescaledForce_a;
 
 sortedDistance = sorted(1,:);
 sortedForce = sorted(2,:);
+%%
+i=i+1;
+exp   = g(i);
+    start = exp.moving_trap.event.appr.start;
+    stop  = exp.moving_trap.event.appr.stop;
 
-%let's do packet of...
+    distance = exp.bead_distance(start:stop);
+    force    = exp.still_trap_force.tangent(start:stop);
+%%
+%p=rescalesForce;
+%x=rescaledDistance;
+%minx=3;
+%maxx=40;
+%sortedForce=(sortedDistance>minx);
+%sortedDistance=(sortedDistance>minx);
+
+%p=sortedForce(sortedDistance<maxx);
+%x=sortedDistance(sortedDistance<maxx);
+p=sortedForce;
+x=sortedDistance;
+%x=[0.1:0.01:40];
+%p= 1./ (x.^1.0);
+
+
+sumx = @(u)  arrayfun(@(xp) sum(p(x > xp))/sum(p),u);
+clf
+
+xmin=min(x);
+xmax=max(x);
+int=xmin:0.1:50;
+%pr=@(x) x^(-1.5);
+pr=@(x) log(x);
+th=@(u) arrayfun(@(x)(pr(xmax) - pr(x))/(pr(xmax)-pr(xmin)),u);
+
+
+loglog(int,sumx(int),'+');
+hold on 
+%loglog(int,log(27./int),'r--');
+%loglog(int,3.3 ./(int.^0.5),'g--');
+loglog(int,th(int),'r--');
+
+for e=[0.5,1.5,2];
+    pre=@(x) x^(-(e-1));
+    the=@(u) arrayfun(@(x)(pre(xmax) - pre(x))/(pre(xmax)-pre(xmin)),u);
+    loglog(int,the(int),'g--');
+end
+clear e;
+
+
+xlabel('log(distance)');
+ylabel('cumulative distribution of force');
+
+
+%% let's do packet of...
 n=50;
 clear stat
 dmax=max(sortedDistance(sortedDistance < 50));
@@ -273,12 +330,21 @@ clear exp
 %%%loglog(stat.d+ofset,exp(polyval(p,log(stat.d+ofset))),'k--');
 %
 r=frac;
-xx=1:0.1:15;
-for exposant=0.5:0.5:3
+uuu=1/2;
+xx=1:(20^uuu)/100:20^uuu;
+xx = xx.^(1/uuu);
+for exposant=[0.5 1 2]
+    
     ff=@(x) arrayfun(@(u)1/(u^exposant),x);
     %h=@(x) arrayfun(@(u)1/(u^(1/exposant)),x);
     rescales=@(u) arrayfun(@(x) (x-1)*(1-r^(-1/exposant))/(1-r^(-1/fexposant))+1,u);
-    loglog(xx,ff(rescales(xx)),'g--');
+    loglog(xx,ff(rescales(xx)),'g-');
+    hold on
+    exposant=exposant-0.5;
+    ff=@(x) arrayfun(@(u)1/(u^exposant),x);
+    %h=@(x) arrayfun(@(u)1/(u^(1/exposant)),x);
+    rescales=@(u) arrayfun(@(x) (x-1)*(1-r^(-1/exposant))/(1-r^(-1/fexposant))+1,u);
+    %loglog(xx,ff(rescales(xx)),'k--');
 end
 
 hold on 
@@ -291,9 +357,21 @@ h=@(x) arrayfun(@(u)1/(u^(1/texposant)),x);
 %rescales=@(u) arrayfun(@(x) (x*(1-r^(-1/fexposant))+(r^(-1/fexposant)-r^(-1/texposant))) / (1-r^(-1/texposant)),u);
 rescales=@(u) arrayfun(@(x) (x-1)*(1-r^(-1/texposant))/(1-r^(-1/fexposant))+1,u);
 
-loglog(xx,f(rescales(xx)),'r--');
+loglog(xx,f(rescales(xx)),'r-');
 
 loglog([1 1/frac^(1/fexposant)],[1 frac],'kx');
+title(sprintf('red : %d -- sim : %d -- res : %d',texposant,mexposant,fexposant));
 xlabel('log distance (rescaled)');
 ylabel('log force (rescaled)');
+
+
+%%
+figure(30)
+r=abs(mm ./ fmax_a);
+pcrt=  @(u)arrayfun(@(x) sum(r < x/100)/length(r),u);
+pcrtb=  @(u)arrayfun(@(x) sum(rrr < x/100)/length(rrr),u);
+inv=[0:0.1:40];
+plot(inv,pcrt(inv)-1);
+hold on;
+plot(inv,pcrtb(inv)-1,'r');
 
