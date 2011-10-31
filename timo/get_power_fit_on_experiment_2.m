@@ -49,6 +49,7 @@ m=struct;
 		fit_res(i).d=d;%#ok<AGROW>
 		fit_res(i).force=force;%#ok<AGROW>
         fit_res(i).raw=m(i);%#ok<AGROW>
+        fit_res(i).relaxed = relaxed;
 		%fit_res(i).cp=exp.cp;%#ok<AGROW>
 		%fit_res(i).arp=exp.arp;%#ok<AGROW>
         %fit_res(i).time_m=exp.time_m;%#ok<AGROW>
