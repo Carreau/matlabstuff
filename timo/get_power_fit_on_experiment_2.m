@@ -1,17 +1,22 @@
 function [fit_res]=get_power_fit_on_experiment_2(struct,relaxed)
 % if relaxed set to true, fit wont try to stay at d0 >0
 %
-eb = erasableBuffer;
-m=struct;
-	for i=1:length(m);
-        eb.counter(i,length(m));
-		exp=m(i);
-		start= exp.start;
-		stop = exp.stopt;
-		d=exp.d(start:stop);
+
+fit_res = arrayfun(@(x)corefunc(x,relaxed),struct);
+		
+	 %and now save the stuff
+	 
+save([datestr(now,'YYYY-mm-DD_HH-MM-ss'),sprintf('-relaxed_%d_',relaxed),'_fit_res.mat'],'fit_res')
+system('say matlab script terminated without error');
+end
+
+function [fit_res] =corefunc(ex,relaxed)		
+		start= ex.start;
+		stop = ex.stopt;
+		d=ex.d(start:stop);
 		
         %take the absolute value, otherwithe some part of the fi crash
-        force = abs(exp.f(start:stop));
+        force = abs(ex.f(start:stop));
 		
 		% in this version, I estimate the range that should be used for the fit,
 		% if the data is steep, only use 10 times the x range after the data
@@ -39,25 +44,19 @@ m=struct;
 		end
 	
 		%here we fit the power law
-		[d0(i),f0(i),alpha(i),k(i),f_out,f_gof]=fit_power_with_offsets(d(p_fin:end),force(p_fin:end)*1e12,relaxed);%#ok<AGROW>
-		fit_res(i).fit=f_out; %#ok<AGROW>
-		fit_res(i).gof=f_gof;%#ok<AGROW>
-		fit_res(i).d0=d0(i);%#ok<AGROW>
-		fit_res(i).f0=f0(i);%#ok<AGROW>
-		fit_res(i).alpha=alpha(i);%#ok<AGROW>
-		fit_res(i).k=k(i);%#ok<AGROW>
-		fit_res(i).d=d;%#ok<AGROW>
-		fit_res(i).force=force;%#ok<AGROW>
-        fit_res(i).raw=m(i);%#ok<AGROW>
-        fit_res(i).relaxed = relaxed;%#ok<AGROW>
-        fit_res(i).uuid    = m(i).UUID.toString();%#ok<AGROW>
-		%fit_res(i).cp=exp.cp;%#ok<AGROW>
-		%fit_res(i).arp=exp.arp;%#ok<AGROW>
-        %fit_res(i).time_m=exp.time_m;%#ok<AGROW>
-	end
-		
-	 %and now save the stuff
-	 
-save([datestr(now,'YYYY-mm-DD_HH-MM-ss'),sprintf('-relaxed_%d_',relaxed),'_fit_res.mat'],'fit_res')
-system('say matlab script terminated without error');
+		[d0,f0,alpha,k,f_out,f_gof]=fit_power_with_offsets(d(p_fin:end),force(p_fin:end)*1e12,relaxed);
+		fit_res.fit = f_out; 
+		fit_res.gof = f_gof;
+		fit_res.d0  = d0;
+		fit_res.f0  = f0;
+		fit_res.alpha = alpha;
+		fit_res.k   = k;
+		fit_res.d   = d;
+		fit_res.force = force;
+        fit_res.raw = ex;
+        fit_res.relaxed = relaxed;
+        fit_res.uuid    = ex.UUID.toString();
+		%fit_res.cp=exp.cp;%#ok<AGROW>
+		%fit_res.arp=exp.arp;%#ok<AGROW>
+        %fit_res.time_m=exp.time_m;%#ok<AGROW>
 end
