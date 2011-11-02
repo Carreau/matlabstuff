@@ -36,7 +36,7 @@ plot(xdata, k*(xdata-d0).^alpha+f0,'r');
 hold off
 
 %why do we pause ?
-%pause(.5)
+
 
 
 
@@ -46,6 +46,7 @@ hold off
         persistent sse_old
 
         d0 = abs(params(1));
+        d0 = min(d0,max(xdata')*0.9+min(xdata')*0.1);
         
         posx=find(xdata-d0<=0);
         
@@ -55,6 +56,11 @@ hold off
         ydata_i(posx)=[];
         
         
+        %figure(1)
+        %fprintf('plotting...for d0:%d versus %d\n',d0,max(xdata')*0.9+min(xdata')*0.1)
+        %plot(xdata_i-d0,ydata_i)
+        %pause(.1)
+        % need to check we have enough datapoint
         if ((d0<=min(xdata) && d0>0 ) || relaxed )
             [f_out,f_gof]=fit((xdata_i-d0), ydata_i,'power2','Lower',[0,-20,-inf],'Upper',[Inf,0,inf]);
             sse = f_gof.sse;
