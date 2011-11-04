@@ -11,7 +11,7 @@ arrayfun(@(x)corefunc(x,relaxed),struct);
 system('say matlab script terminated without error');
 end
 
-function [fit_res] =corefunc(ex,relaxed)
+function corefunc(ex,relaxed)
         %let's start parralisation crazyness
         %get the uuid and construc a filename from it
         uuid     = char(ex.UUID.toString());
