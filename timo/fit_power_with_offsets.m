@@ -16,13 +16,19 @@ function [d0,f0,alpha,k,f_out,f_gof]=fit_power_with_offsets(d,f,relaxed)
 xdata=d;
 ydata=f;
 
-start_point = [min(d)];%,min(f)];
+start_point = min(d);%,min(f)];
+end_point = max(d);
 
 %can't we just use modelfun ? 
-model = @(p)modelfun(p,relaxed);
-
-estimates = fminsearch(model, start_point);
-
+model = @(p)modelfun(p);
+if(relaxed)
+    lowbound = -10*end_point;
+else 
+    lowbound = 0;
+end
+%hi_bound= (start_point+end_point*9)/10
+hi_bound= start_point;
+estimates = fminbnd(model, lowbound,hi_bound );
 
 d0 = estimates(1);
 %f0 = estimates(2)
@@ -41,12 +47,13 @@ hold off
 
 
 %-----------------------------------------------------------------------
- function [sse,  alpha,f0,k,f_out,f_gof] = modelfun(params,relaxed)
+ function [sse,  alpha,f0,k,f_out,f_gof] = modelfun(params)
      %global sse_old
         persistent sse_old
 
-        d0 = abs(params(1));
-        d0 = min(d0,max(xdata')*0.9+min(xdata')*0.1);
+        %d0 = abs(params(1));
+        d0 = params(1);
+        %d0 = min(d0,max(xdata')*0.9+min(xdata')*0.1);
         
         posx=find(xdata-d0<=0);
         
@@ -61,7 +68,7 @@ hold off
         %plot(xdata_i-d0,ydata_i)
         %pause(.1)
         % need to check we have enough datapoint
-        if ((d0<=min(xdata) && d0>0 ) || relaxed )
+        if (d0<=min(xdata))
             [f_out,f_gof]=fit((xdata_i-d0), ydata_i,'power2','Lower',[0,-20,-inf],'Upper',[Inf,0,inf]);
             sse = f_gof.sse;
             alpha=f_out.b;
