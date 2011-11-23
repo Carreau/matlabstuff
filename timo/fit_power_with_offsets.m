@@ -1,4 +1,4 @@
-function [d0,f0,alpha,k,f_out,f_gof]=fit_power_with_offsets(d,f,relaxed)
+function [d0,alpha,k,f_out,f_gof]=fit_power_with_offsets(d,f,relaxed)
 
 % might want to use a persistant variable instead of a global. 
 % persistant will have the advantage of not varing between calls, but will
@@ -35,10 +35,10 @@ d0 = estimates(1);
 %eta = estimates(2)
 
 
-[sse,alpha,f0,k,f_out,f_gof] = model(estimates);
+[sse,alpha,k,f_out,f_gof] = model(estimates);
 plot(xdata,ydata);
 hold on
-plot(xdata, k*(xdata-d0).^alpha+f0,'r');
+plot(xdata, k*(xdata-d0).^alpha,'r');
 hold off
 
 %why do we pause ?
@@ -47,7 +47,7 @@ hold off
 
 
 %-----------------------------------------------------------------------
- function [sse,  alpha,f0,k,f_out,f_gof] = modelfun(params)
+ function [sse,  alpha,k,f_out,f_gof] = modelfun(params)
      %global sse_old
         persistent sse_old
 
@@ -69,10 +69,9 @@ hold off
         %pause(.1)
         % need to check we have enough datapoint
         if (d0<=min(xdata))
-            [f_out,f_gof]=fit((xdata_i-d0), ydata_i,'power2','Lower',[0,-20,-inf],'Upper',[Inf,0,inf]);
+            [f_out,f_gof]=fit((xdata_i-d0), ydata_i,'power1','Lower',[0,-20],'Upper',[Inf,0]);
             sse = f_gof.sse;
             alpha=f_out.b;
-            f0=f_out.c;
             k=f_out.a;
 
         else

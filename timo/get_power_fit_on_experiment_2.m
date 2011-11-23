@@ -15,7 +15,7 @@ function corefunc(ex,relaxed)
         %let's start parralisation crazyness
         %get the uuid and construc a filename from it
         uuid     = char(ex.UUID.toString());
-        basename=sprintf('parralelisme_crazyness_%s_relaxed_%d',uuid,relaxed);
+        basename=sprintf('parralelisme_crazyness_nof0_%s_relaxed_%d',uuid,relaxed);
         lockfile = sprintf('%s.lock',basename); 
         matfile = sprintf('%s.mat',basename); 
         if (exist(matfile,'file'))
@@ -71,19 +71,20 @@ function corefunc(ex,relaxed)
 		end
 	
 		%here we fit the power law
-		[d0,f0,alpha,k,f_out,f_gof]=fit_power_with_offsets(d(p_fin:end),force(p_fin:end)*1e12,relaxed);
+        fit_res.f0  = determine_zero_force(ex);
+		[d0,alpha,k,f_out,f_gof]=fit_power_with_offsets(d(p_fin:end),(force(p_fin:end)-fit_res.f0)*1e12,relaxed);
 		fit_res.fit = f_out; 
 		fit_res.gof = f_gof;
 		fit_res.d0  = d0;
-		fit_res.f0  = f0;
 		fit_res.alpha = alpha;
-		fit_res.k   = k;
+		fit_res.k   = k*1e-12;
 		fit_res.d   = d;
 		fit_res.force = force;
         fit_res.raw = ex;
         fit_res.relaxed = relaxed;
         fit_res.uuid    = char(ex.UUID.toString());
         save(matfile,'fit_res')
+        fprintf('saving %s',matfile);
         delete(lockfile)
 		%fit_res.cp=exp.cp;%#ok<AGROW>
 		%fit_res.arp=exp.arp;%#ok<AGROW>
