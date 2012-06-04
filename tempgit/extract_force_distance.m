@@ -4,15 +4,15 @@
 
 function m=extract_force_distance(filename)
     %% load data
-    clear
-    disp('chargement...');
-    g =    temptest('30_mars_10cp_25apr.mat');
-    g = [g temptest('30_mars_30cp_25apr.mat')];
-    g = [g temptest('30_mars_50cp_25apr.mat')];
+    %disp('chargement...');
+    %g =    temptest('30_mars_10cp_25apr.mat');
+    %g = [g temptest('30_mars_30cp_25apr.mat')];
+    %g = [g temptest('30_mars_50cp_25apr.mat')];
+    %disp('...');
+    %g = [g temptest('8mars25Arp50cp.mat')];
+    %g = [g temptest('8mars25arp00cp.mat')];
     disp('...');
-    g = [g temptest('8mars25Arp50cp.mat')];
-    g = [g temptest('8mars25arp00cp.mat')];
-    disp('...');
+    g= temptest(filename)
     %g = [g temptest('run1_1-mars-2011_25arp-10cp.mat')];
     %g = [g temptest('run3_1-mars-2011_25arp-30cp.mat')];
     %g = [g temptest('run4_1-mars-2011_25arp-30cp.mat')];

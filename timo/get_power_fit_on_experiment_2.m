@@ -2,8 +2,7 @@ function [fit_res]=get_power_fit_on_experiment_2(struct,relaxed)
 % if relaxed set to true, fit wont try to stay at d0 >0
 %
 
-%fit_res = 
-arrayfun(@(x)corefunc(x,relaxed),struct);
+fit_res = arrayfun(@(x)corefunc(x,relaxed),struct);
 		
 	 %and now save the stuff
 	 
@@ -11,7 +10,7 @@ arrayfun(@(x)corefunc(x,relaxed),struct);
 system('say matlab script terminated without error');
 end
 
-function corefunc(ex,relaxed)
+function fit_res = corefunc(ex,relaxed)
         %let's start parralisation crazyness
         %get the uuid and construc a filename from it
         uuid     = char(ex.UUID.toString());
@@ -39,7 +38,7 @@ function corefunc(ex,relaxed)
         end
         fprintf('iteration %d\n', niter)
 		start= ex.start;
-		stop = ex.stopt;
+		stop = ex.stop;
 		d=ex.d(start:stop);
 		
         %take the absolute value, otherwithe some part of the fi crash

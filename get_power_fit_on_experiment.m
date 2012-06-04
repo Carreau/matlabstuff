@@ -1,18 +1,18 @@
 function get_power_fit_on_experiment()
 %% 
 %dat(1).name='8mars25Arp50cp.mat';
-%dat(2).name='8mars25arp00cp.mat';
+dat(1).name='8mars25arp00cp.mat';
 %dat(3).name='run1_1-mars-2011_25arp-10cp.mat';
 %dat(4).name='run3_1-mars-2011_25arp-30cp.mat';
 %dat(5).name='run4_1-mars-2011_25arp-30cp.mat';
 %dat(6).name='30_mars_10cp_25apr.mat';
 %dat(7).name='30_mars_30cp_25apr.mat';
-dat(8).name='30_mars_50cp_25apr.mat';
+%dat(8).name='30_mars_50cp_25apr.mat';
 
 %%
 eb = erasableBuffer;
-for ji=8:length(dat)
-
+for ji=1:length(dat)
+    disp('loop');
 	clear f g d force exp f_out
 	%analyze the bead approach data
 	str=[dat(ji).name];
@@ -169,7 +169,7 @@ for ji=8:length(dat)
 		
 	 %and now save the stuff
 	  
-	save([str(1:end-4),'_fit_res.mat'],'fit_res')
+	save([str(1:end-4),'_fit_res_test.mat'],'fit_res')
 
 end
 system('say matlab script terminated without error');
