@@ -20,14 +20,15 @@ function m=extract_force_distance(filename)
    
     m=[];
     for i=1:length(g)
-       m(i).UUID = java.util.UUID.randomUUID.toString;%#ok<AGROW>
-       m(i).d    = g(i).bead_distance ;%#ok<AGROW>
-       m(i).start= g(i).moving_trap.event.appr.start;%#ok<AGROW>
-       m(i).stop = g(i).moving_trap.event.appr.stop;%#ok<AGROW>
-       m(i).back = g(i).moving_trap.event.retr_start;%#ok<AGROW>
-       m(i).f    = g(i).still_trap_force.tangent;%#ok<AGROW>
-       m(i).arp  = g(i).arp;%#ok<AGROW>
-       m(i).cp   = g(i).cp;%#ok<AGROW>
+       m(i).UUID     = java.util.UUID.randomUUID.toString;%#ok<AGROW>
+       m(i).d        = g(i).bead_distance ;%#ok<AGROW>
+       m(i).start    = g(i).moving_trap.event.appr.start;%#ok<AGROW>
+       m(i).stop     = g(i).moving_trap.event.appr.stop;%#ok<AGROW>
+       m(i).back     = g(i).moving_trap.event.retr_start;%#ok<AGROW>
+       m(i).f        = g(i).still_trap_force.tangent;%#ok<AGROW>
+       m(i).arp      = g(i).arp;%#ok<AGROW>
+       m(i).cp       = g(i).cp;%#ok<AGROW>
+       m(i).time_m   = g(i).time_m;%#ok<AGROW>
     end
     disp('done')
 
