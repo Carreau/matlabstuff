@@ -29,6 +29,7 @@ function m=extract_force_distance(filename)
        m(i).arp      = g(i).arp;%#ok<AGROW>
        m(i).cp       = g(i).cp;%#ok<AGROW>
        m(i).time_m   = g(i).time_m;%#ok<AGROW>
+       m(i).parameters   = g(i).rawdata.parameters;%#ok<AGROW>
     end
     disp('done')
 
