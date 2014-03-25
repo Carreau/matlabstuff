@@ -69,7 +69,7 @@ hold off
         %pause(.1)
         % need to check we have enough datapoint
         if (d0<=min(xdata))
-            [f_out,f_gof]=fit((xdata_i-d0), ydata_i,'power1','Lower',[0,-20],'Upper',[Inf,0]);
+            [f_out,f_gof]=fit((xdata_i-d0), ydata_i,'power1','Lower',[0,-5.001],'Upper',[1e72,-0.0]);
             sse = f_gof.sse;
             alpha=f_out.b;
             k=f_out.a;

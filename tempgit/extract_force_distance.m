@@ -12,7 +12,8 @@ function m=extract_force_distance(filename)
     %g = [g temptest('8mars25Arp50cp.mat')];
     %g = [g temptest('8mars25arp00cp.mat')];
     disp('...');
-    g= temptest(filename)
+    disp(filename);
+    g= temptest(filename);
     %g = [g temptest('run1_1-mars-2011_25arp-10cp.mat')];
     %g = [g temptest('run3_1-mars-2011_25arp-30cp.mat')];
     %g = [g temptest('run4_1-mars-2011_25arp-30cp.mat')];
@@ -30,6 +31,8 @@ function m=extract_force_distance(filename)
        m(i).cp       = g(i).cp;%#ok<AGROW>
        m(i).time_m   = g(i).time_m;%#ok<AGROW>
        m(i).parameters   = g(i).rawdata.parameters;%#ok<AGROW>
+       m(i).filename   = g(i).rawdata.name;%#ok<AGROW>
+       m(i).speed      = g(i).rawdata.parameters.speed.value;
     end
     disp('done')
 

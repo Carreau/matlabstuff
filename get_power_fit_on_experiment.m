@@ -172,5 +172,5 @@ for ji=1:length(dat)
 	save([str(1:end-4),'_fit_res_test.mat'],'fit_res')
 
 end
-system('say matlab script terminated without error');
+%system('say matlab script terminated without error');
 end

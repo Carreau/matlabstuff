@@ -1,13 +1,7 @@
-function [fit_res]=get_power_fit_on_experiment_2(struct,relaxed)
-% if relaxed set to true, fit wont try to stay at d0 >0
-%
+function [fit_res]=fit_entropic1(struct)
 
-fit_res = arrayfun(@(x)corefunc(x,relaxed),struct);
+fit_res = arrayfun(@(x)corefunc(x),struct);
 		
-	 %and now save the stuff
-	 
-%save([datestr(now,'YYYY-mm-DD_HH-MM-ss'),sprintf('-relaxed_%d_',relaxed),'_fit_res.mat'],'fit_res')
-%system('say matlab script terminated without error');
 end
 
 function fit_res = corefunc(ex,relaxed)
@@ -26,7 +20,7 @@ function fit_res = corefunc(ex,relaxed)
            return 
         end
         
-        %save(lockfile,'-ascii','uuid')
+        save(lockfile,'-ascii','uuid')
         
         persistent niter;
         %niter=niter+1;
@@ -82,9 +76,9 @@ function fit_res = corefunc(ex,relaxed)
         fit_res.raw = ex;
         fit_res.relaxed = relaxed;
         fit_res.uuid    = char(ex.UUID.toString());
-        %save(matfile,'fit_res')
+        save(matfile,'fit_res')
         %fprintf('saving %s',matfile);
-        %delete(lockfile)
+        delete(lockfile)
 		%fit_res.cp=exp.cp;%#ok<AGROW>
 		%fit_res.arp=exp.arp;%#ok<AGROW>
         %fit_res.time_m=exp.time_m;%#ok<AGROW>
